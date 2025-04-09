@@ -8,7 +8,6 @@ return [
     'general' => 'General',
     'users' => 'Users',
     'roles' => 'Roles',
-    'manage_users' => 'Manage Users',
     'users_list' => 'Users List',
     'add_user' => 'Add User',
     'username' => 'Username',
@@ -178,7 +177,6 @@ return [
     'id' => 'ID',
     'phone' => 'Phone',
     'add' => 'Add',
-    'total' => 'Total',
 
     'maintenance' => 'Maintenance',
     'manage_maintenance' => 'Manage Maintenance',
@@ -212,7 +210,6 @@ return [
     'remove' => 'Remove',
     'total_parts_cost' => 'Total Parts Cost',
     'maintenance_cost' => 'Maintenance Cost',
-    'total_cost' => 'Total Cost',
 
     'expenses' => 'Expenses',
     'manage_expenses' => 'Manage Expenses',
@@ -235,4 +232,6 @@ return [
     'spare_parts_coming_soon' => 'Spare Parts Management Coming Soon',
     'internal' => 'Internal',
     'invoice' => 'Invoice',
+    'last_30_days' => 'Last 30 Days',
+    'in_stock' => 'In Stock',
 ];

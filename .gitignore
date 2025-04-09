@@ -1,34 +1,31 @@
-# Composer
+
 /vendor/
 
-# PHPStorm
 .idea/
 
-# Logs
 *.log
 
-# OS-generated files
 .DS_Store
 Thumbs.db
 
-# .env files
+
 .env
 
-# PHPUnit
+
 .phpunit.result.cache
 
-# Caching directories
+
 /cache/
 */cache/
 
-# Composer lock file (optional - sometimes useful to commit, depending on your setup)
+
 composer.lock
 
-# PHPMD and PHPCS reports
+
 .phpcs.xml
 .phpmd.xml
 
-# Temporary files
+
 *.swp
 *.swo
 *.bak

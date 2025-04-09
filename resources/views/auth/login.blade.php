@@ -28,7 +28,7 @@
                                     <a href="{{ url('/' . $page='index') }}">
                                         <img src="{{URL::asset('assets/img/brand/favicon.png')}}" class="sign-favicon ht-40" alt="logo">
                                     </a>
-                                    <h1 class="main-logo1 ml-1 mr-0 my-auto tx-28">TA<span>Q</span>A</h1>
+                                    <h1 class="main-logo1 ml-1 mr-0 my-auto tx-28">bike</h1>
                                 </div>
                                 <div class="card-sigin">
                                     <div class="main-signup-header">

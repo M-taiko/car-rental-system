@@ -1,6 +1,6 @@
 <?php
 return [
-    'welcome' => 'Welcome to TAQA',
+    'welcome' => 'Welcome to Bike',
     'BIKE_RENTAL_SYSTEM' => 'Bike Rental System',
     'dashboard' => 'Dashboard',
     'main' => 'Main',

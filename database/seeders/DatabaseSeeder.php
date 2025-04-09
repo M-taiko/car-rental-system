@@ -32,7 +32,6 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Mohamed Tarek Hussain',
                 'password' => bcrypt('123456789'),
                 // أضف الحقول دي فقط لو موجودة في جدول users وفي $fillable
-                'roles_name' => 'SuperAdmin',
                 'status' => 'active',
             ]
         );

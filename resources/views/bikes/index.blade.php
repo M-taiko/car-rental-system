@@ -19,9 +19,11 @@
     </div>
     <div class="d-flex my-xl-auto right-content">
         <!-- Add New Bike Button -->
-        <button class="btn btn-success" data-toggle="modal" data-target="#addBikeModal">
-            <i class="fas fa-plus"></i> {{ __('messages.add_bike') }}
-        </button>
+        @can('create-bikes')
+            <button class="btn btn-success" data-toggle="modal" data-target="#addBikeModal">
+                <i class="fas fa-plus"></i> {{ __('messages.add_bike') }}
+            </button>
+        @endcan
     </div>
 </div>
 @endsection
@@ -65,56 +67,59 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- سيتم ملء هذا الجزء ديناميكيًا بواسطة DataTables -->
-                    </tbody>
+                        <!-- سيتم ملء هذا الجزء ديناميكيً **باستخد DataTables -->
+                    </boby>
                 </table>
+            </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Add Bike Modal -->
-<div class="modal fade" id="addBikeModal" tabindex="-1" role="dialog" aria-labelledby="addBikeModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form action="{{ route('bikes.store') }}" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addBikeModalLabel">{{ __('messages.add_bike_modal_title') }}</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="bikeName">{{ __('messages.bike_name') }}</label>
-                        <input type="text" name="name" class="form-control" id="bikeName" required>
+@can('create-bikes')
+    <div class="modal fade" id="addBikeModal" tabindex="-1" role="dialog" aria-labelledby="addBikeModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('bikes.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addBikeModalLabel">{{ __('messages.add_bike_modal_title') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="bikeType">{{ __('messages.type') }}</label>
-                        <input type="text" name="type" class="form-control" id="bikeType" required>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="bikeName">{{ __('messages.bike_name') }}</label>
+                            <input type="text" name="name" class="form-control" id="bikeName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bikeType">{{ __('messages.type') }}</label>
+                            <input type="text" name="type" class="form-control" id="bikeType" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bikeColor">{{ __('messages.color') }}</label>
+                            <input type="text" name="color" class="form-control" id="bikeColor" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bikePrice">{{ __('messages.price_per_hour') }}</label>
+                            <input type="number" step="0.01" name="price_per_hour" class="form-control" id="bikePrice" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bikeDescription">{{ __('messages.description') }}</label>
+                            <textarea name="description" class="form-control" id="bikeDescription"></textarea>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="bikeColor">{{ __('messages.color') }}</label>
-                        <input type="text" name="color" class="form-control" id="bikeColor" required>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
                     </div>
-                    <div class="form-group">
-                        <label for="bikePrice">{{ __('messages.price_per_hour') }}</label>
-                        <input type="number" step="0.01" name="price_per_hour" class="form-control" id="bikePrice" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="bikeDescription">{{ __('messages.description') }}</label>
-                        <textarea name="description" class="form-control" id="bikeDescription"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
+@endcan
 
 <!-- Edit Bike Modals (سيتم تحميلها ديناميكيًا عند الحاجة) -->
 @endsection

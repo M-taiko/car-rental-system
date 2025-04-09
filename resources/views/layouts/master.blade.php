@@ -18,14 +18,14 @@
     <!-- /Loader -->
 
     <!-- Check if user has 'superadmin' role to show the sidebar -->
-    @can('superadmin')
+
         @include('layouts.main-sidebar')
         <!-- If superadmin, keep the content layout normal -->
         <div class="main-content app-content">
-    @else
+
         <!-- If not superadmin, expand content to full width -->
         <div class="main-content app-content" style="margin-left: 0; width: 85%;  display: contents;">
-    @endcan
+
 
     @include('layouts.main-header')
 

@@ -4,8 +4,6 @@
     {{ __('messages.maintenance') }} - {{ __('messages.BIKE_RENTAL_SYSTEM') }}
 @endsection
 
-
-
 @section('page-header')
 <div class="breadcrumb-header justify-content-between">
     <div class="my-auto">
@@ -15,8 +13,9 @@
         </div>
     </div>
     <div class="d-flex my-xl-auto right-content">
-        <button class="btn btn-primary" data-toggle="modal" data-target="#addMaintenanceModal">{{ __('messages.add_maintenance') }}</button>
-
+        @can('create-maintenance')
+            <button class="btn btn-primary" data-toggle="modal" data-target="#addMaintenanceModal">{{ __('messages.add_maintenance') }}</button>
+        @endcan
     </div>
 </div>
 @endsection
@@ -27,7 +26,7 @@
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ session('success') }}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+            <span aria-hidden="true">×</span>
         </button>
     </div>
     @endif
@@ -35,16 +34,17 @@
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         {{ session('error') }}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+            <span aria-hidden="true">×</span>
         </button>
     </div>
     @endif
+
+@can('view-maintenance')
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-
-
+                <h3 class="card-title">{{ __('messages.maintenance_list') }}</h3>
             </div>
             <div class="card-body">
                 <table id="maintenanceTable" class="table table-bordered table-center table-hover">
@@ -68,9 +68,14 @@
         </div>
     </div>
 </div>
+@else
+    <div class="alert alert-warning">
+        {{ __('messages.unauthorized_access') }}
+    </div>
+@endcan
 
 <!-- Modal for Adding Maintenance -->
-<!-- Modal for Adding Maintenance -->
+@can('create-maintenance')
 <div class="modal fade" id="addMaintenanceModal" tabindex="-1" role="dialog" aria-labelledby="addMaintenanceModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -180,10 +185,10 @@
         </div>
     </div>
 </div>
-
-
+@endcan
 
 <!-- Modal for Adding Customer -->
+@can('create-maintenance') <!-- إضافة عميل جديد مرتبط بإضافة صيانة -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -212,12 +217,15 @@
         </div>
     </div>
 </div>
-@endsection
+@endcan
 
+@endsection
 
 @section('js')
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
     console.log('Script is loaded'); // Debugging
 
@@ -303,7 +311,11 @@
             row.find('.part-price').text(parseFloat(price).toFixed(2));
             const quantity = parseInt(row.find('.part-quantity').val()) || 0;
             if (quantity > quantityAvailable) {
-                alert('{{ __("messages.insufficient_quantity_alert") }}');
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{{ __("messages.insufficient_quantity_alert") }}',
+                    text: '{{ __("messages.insufficient_quantity_message") }}',
+                });
                 row.find('.part-quantity').val(quantityAvailable);
             }
             row.find('.part-total').text((price * quantity).toFixed(2));
@@ -317,7 +329,11 @@
             const quantity = parseInt($(this).val()) || 0;
             const quantityAvailable = parseInt(row.find('.spare-part-select option:selected').data('quantity')) || 0;
             if (quantity > quantityAvailable) {
-                alert('{{ __("messages.insufficient_quantity_alert") }}');
+                Swal.fire({
+                    icon: 'warning',
+                    title: '{{ __("messages.insufficient_quantity_alert") }}',
+                    text: '{{ __("messages.insufficient_quantity_message") }}',
+                });
                 $(this).val(quantityAvailable);
             }
             row.find('.part-total').text((price * quantity).toFixed(2));
@@ -350,7 +366,7 @@
 
         // DataTable
         console.log('Initializing DataTable'); // Debugging
-        $('#maintenanceTable').DataTable({
+        var table = $('#maintenanceTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: {
@@ -358,6 +374,24 @@
                 type: 'GET',
                 error: function (xhr, error, thrown) {
                     console.log('DataTable AJAX Error:', xhr, error, thrown); // Debugging
+                    if (xhr.status === 401) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Unauthorized',
+                            text: 'Please log in to view maintenance records.',
+                            confirmButtonText: 'Login',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = "{{ route('login') }}";
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while fetching data: ' + (xhr.responseJSON?.error || thrown),
+                        });
+                    }
                 }
             },
             columns: [
@@ -373,8 +407,19 @@
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ],
             language: {
-                "emptyTable": "{{ __('messages.no_data_available') }}"
-            }
+                "emptyTable": "{{ __('messages.no_data_available') }}",
+                search: "{{ __('messages.search_maintenance') }}",
+                lengthMenu: "{{ __('messages.show_entries') }}",
+                zeroRecords: "{{ __('messages.no_maintenance_found') }}",
+                info: "{{ __('messages.showing_info') }}",
+                infoEmpty: "{{ __('messages.no_maintenance_available') }}",
+                processing: "{{ __('messages.processing') }}",
+                paginate: {
+                    next: "{{ __('messages.next') }}",
+                    previous: "{{ __('messages.previous') }}"
+                }
+            },
+            order: [[7, 'desc']] // Order by date descending
         });
 
         // Add Maintenance
@@ -392,14 +437,22 @@
                 success: function (response) {
                     console.log('Add Maintenance Success:', response); // Debugging
                     if (response.success) {
-                        setTimeout(function() {
-                            location.reload();
-                        }, 1000);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message || '{{ __("messages.maintenance_added_successfully") }}',
+                        });
+                        $('#addMaintenanceModal').modal('hide');
+                        table.ajax.reload();
                     }
                 },
                 error: function (xhr) {
                     console.log('Add Maintenance Error:', xhr); // Debugging
-                    alert(xhr.responseJSON.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: xhr.responseJSON?.message || '{{ __("messages.error_adding_maintenance") }}',
+                    });
                 }
             });
         });
@@ -419,6 +472,11 @@
                 success: function (response) {
                     console.log('Add Customer Success:', response); // Debugging
                     if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: response.message || '{{ __("messages.customer_added_successfully") }}',
+                        });
                         $('#addCustomerModal').modal('hide');
                         $('#addCustomerForm')[0].reset();
                         $('#customerSelect').append('<option value="' + response.customer.id + '">' + response.customer.name + ' (' + response.customer.phone + ')</option>');
@@ -427,7 +485,11 @@
                 },
                 error: function (xhr) {
                     console.log('Add Customer Error:', xhr); // Debugging
-                    alert(xhr.responseJSON.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: xhr.responseJSON?.message || '{{ __("messages.error_adding_customer") }}',
+                    });
                 }
             });
         });
@@ -436,54 +498,90 @@
         $(document).on('click', '.complete-maintenance', function () {
             var id = $(this).data('id');
             console.log('Complete Maintenance Clicked, ID:', id); // Debugging
-            if (confirm('{{ __("messages.confirm_complete_maintenance") }}')) {
-                $.ajax({
-                    url: '{{ url("maintenance") }}/' + id + '/complete',
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        console.log('Complete Maintenance Success:', response); // Debugging
-                        if (response.success) {
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1000);
+            Swal.fire({
+                title: '{{ __("messages.confirm_complete_maintenance") }}',
+                text: '{{ __("messages.complete_maintenance_confirmation") }}',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '{{ __("messages.complete") }}',
+                cancelButtonText: '{{ __("messages.cancel") }}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '{{ url("maintenance") }}/' + id + '/complete',
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            console.log('Complete Maintenance Success:', response); // Debugging
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success',
+                                    text: response.message || '{{ __("messages.maintenance_completed_successfully") }}',
+                                });
+                                table.ajax.reload();
+                            }
+                        },
+                        error: function (xhr) {
+                            console.log('Complete Maintenance Error:', xhr); // Debugging
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: xhr.responseJSON?.message || '{{ __("messages.error_completing_maintenance") }}',
+                            });
                         }
-                    },
-                    error: function (xhr) {
-                        console.log('Complete Maintenance Error:', xhr); // Debugging
-                        alert(xhr.responseJSON.message);
-                    }
-                });
-            }
+                    });
+                }
+            });
         });
 
         // Delete Maintenance
         $(document).on('click', '.delete-maintenance', function () {
             var id = $(this).data('id');
             console.log('Delete Maintenance Clicked, ID:', id); // Debugging
-            if (confirm('{{ __("messages.confirm_delete_maintenance") }}')) {
-                $.ajax({
-                    url: '{{ url("maintenance") }}/' + id,
-                    type: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        console.log('Delete Maintenance Success:', response); // Debugging
-                        if (response.success) {
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1000);
+            Swal.fire({
+                title: '{{ __("messages.confirm_delete_maintenance") }}',
+                text: '{{ __("messages.delete_maintenance_confirmation") }}',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '{{ __("messages.delete") }}',
+                cancelButtonText: '{{ __("messages.cancel") }}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '{{ url("maintenance") }}/' + id,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            console.log('Delete Maintenance Success:', response); // Debugging
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted',
+                                    text: response.message || '{{ __("messages.maintenance_deleted_successfully") }}',
+                                });
+                                table.ajax.reload();
+                            }
+                        },
+                        error: function (xhr) {
+                            console.log('Delete Maintenance Error:', xhr); // Debugging
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: xhr.responseJSON?.message || '{{ __("messages.error_deleting_maintenance") }}',
+                            });
                         }
-                    },
-                    error: function (xhr) {
-                        console.log('Delete Maintenance Error:', xhr); // Debugging
-                        alert(xhr.responseJSON.message);
-                    }
-                });
-            }
+                    });
+                }
+            });
         });
     });
 </script>

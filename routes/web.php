@@ -26,11 +26,14 @@ use App\Http\Controllers\LanguageController;
 
 Auth::routes();
 
-Route::get('/index', [HomeController::class, 'index'])->name('home');
 Route::get('/', function () { return redirect('/login'); })->name('home');
+
+Route::get('expenses/data', [ExpenseController::class, 'getExpensesData'])->name('expenses.data'); //بشكل مؤقت طبعا
+
 
 Route::group(['middleware' => ['auth']], function () {
 
+    Route::get('/index', [HomeController::class, 'index'])->name('index');
 
     Route::resource('bikes', BikeController::class);
     Route::get('bikes-data', [BikeController::class, 'getBikesData'])->name('bikes.data');
@@ -60,8 +63,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/maintenance/spare-parts-profit-report', [MaintenanceController::class, 'sparePartsProfitReport'])->name('maintenance.spare_parts_profit_report');
 
     // Routes للمصروفات
-    Route::get('expenses', [ExpenseController::class, 'index'])->name('expenses.index');
-    Route::get('expenses/data', [ExpenseController::class, 'getExpensesData'])->name('expenses.data');
+
+    Route::resource('expenses', ExpenseController::class);
     Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
     Route::delete('expenses/{id}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 

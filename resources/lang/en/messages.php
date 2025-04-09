@@ -234,4 +234,10 @@ return [
     'invoice' => 'Invoice',
     'last_30_days' => 'Last 30 Days',
     'in_stock' => 'In Stock',
+    'superadmin' => 'Super Admin',
+    'admin' => 'Admin',
+    'accountant' => 'Accountant',
+    'salesperson' => 'Salesperson',
+    'technician' => 'Technician',
+    'rental-agent' => 'Rental Agent',
 ];

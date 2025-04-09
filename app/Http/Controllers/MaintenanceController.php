@@ -23,6 +23,21 @@ class MaintenanceController extends Controller
     public function getMaintenanceData(Request $request)
     {
         try {
+            // التحقق من إن الطلب هو AJAX
+            if (!$request->ajax()) {
+                return response()->json(['error' => 'Invalid request'], 400);
+            }
+
+            // التحقق من إن المستخدم مسجل دخول
+            if (!auth()->check()) {
+                return response()->json(['error' => 'Unauthorized. Please log in.'], 401);
+            }
+
+            // التحقق من صلاحية عرض الصيانات
+            if (!auth()->user()->hasPermissionTo('view-maintenance')) {
+                return response()->json(['error' => 'Unauthorized. You do not have permission to view maintenance records.'], 403);
+            }
+
             $maintenances = Maintenance::with(['bike', 'customer'])->select('maintenance.*');
 
             return DataTables::of($maintenances)
@@ -39,22 +54,31 @@ class MaintenanceController extends Controller
                     return $maintenance->type === 'internal' ? __('messages.internal') : __('messages.customer');
                 })
                 ->addColumn('status', function ($maintenance) {
-                    return $maintenance->status === 'completed' ? '<span class="badge badge-success">' . __('messages.completed') . '</span>' : '<span class="badge badge-warning">' . __('messages.pending') . '</span>';
+                    return $maintenance->status === 'completed'
+                        ? '<span class="badge badge-success">' . __('messages.completed') . '</span>'
+                        : '<span class="badge badge-warning">' . __('messages.pending') . '</span>';
                 })
                 ->addColumn('action', function ($maintenance) {
                     $actions = '';
-                    if ($maintenance->status === 'pending') {
-                        $actions .= '<button class="btn btn-sm btn-success complete-maintenance" data-id="' . $maintenance->id . '">' . __('messages.complete') . '</button>';
+                    // زر "Complete" لو الصيانة Pending و المستخدم عنده صلاحية complete-maintenance
+                    if ($maintenance->status === 'pending' && auth()->user()->hasPermissionTo('complete-maintenance')) {
+                        $actions .= '<button class="btn btn-sm btn-success complete-maintenance" data-id="' . $maintenance->id . '"><i class="fas fa-check"></i> ' . __('messages.complete') . '</button> ';
                     }
-                    $actions .= ' <a href="' . route('maintenance.invoice', $maintenance->id) . '" class="btn btn-sm btn-primary">' . __('messages.invoice') . '</a>';
-                    $actions .= ' <button class="btn btn-sm btn-danger delete-maintenance" data-id="' . $maintenance->id . '">' . __('messages.delete') . '</button>';
-                    return $actions;
+                    // زر "Invoice" لو المستخدم عنده صلاحية view-maintenance-invoice
+                    if (auth()->user()->hasPermissionTo('view-maintenance-invoice')) {
+                        $actions .= '<a href="' . route('maintenance.invoice', $maintenance->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-file-invoice"></i> ' . __('messages.invoice') . '</a> ';
+                    }
+                    // زر "Delete" لو المستخدم عنده صلاحية delete-maintenance
+                    if (auth()->user()->hasPermissionTo('delete-maintenance')) {
+                        $actions .= '<button class="btn btn-sm btn-danger delete-maintenance" data-id="' . $maintenance->id . '"><i class="fas fa-trash"></i> ' . __('messages.delete') . '</button>';
+                    }
+                    return $actions ?: '<span>' . __('messages.no_actions') . '</span>';
                 })
                 ->rawColumns(['status', 'action'])
                 ->make(true);
         } catch (\Exception $e) {
-            \Log::error('Error in MaintenanceController@getMaintenanceData: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error in MaintenanceController@getMaintenanceData: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json(['error' => 'An error occurred while fetching data: ' . $e->getMessage()], 500);
         }
     }
 

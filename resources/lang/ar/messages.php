@@ -234,4 +234,10 @@ return [
     'invoice' => 'فاتورة',
     'last_30_days' => 'آخر 30 يوم',
     'in_stock' => 'في المخزن',
+    'superadmin' => 'سوبر أدمن',
+'admin' => 'أدمن',
+'accountant' => 'محاسب',
+'salesperson' => 'بياع',
+'technician' => 'فني تصليحات',
+'rental-agent' => 'وكيل تأجير',
 ];

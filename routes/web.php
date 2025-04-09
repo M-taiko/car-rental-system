@@ -68,10 +68,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('expenses', [ExpenseController::class, 'store'])->name('expenses.store');
     Route::delete('expenses/{id}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
+
+
     // Routes للخزينة
-    Route::get('accounts', [AccountController::class, 'index'])->name('accounts.index');
-    Route::get('accounts/income', [AccountController::class, 'getIncomeData'])->name('accounts.income');
-    Route::get('accounts/expenses', [AccountController::class, 'getExpensesData'])->name('accounts.expenses');
+
+    Route::resource('accounts', AccountController::class)->except(['show']); // تعطيل الـ Route show
+    Route::get('accounts/income', [AccountController::class, 'income'])->name('accounts.income');
+    Route::get('accounts/expenses', [AccountController::class, 'expenses'])->name('accounts.expenses');
+    Route::get('accounts/totals', [AccountController::class, 'totals'])->name('accounts.totals');
 
 
     Route::resource('spare-parts', SparePartController::class);

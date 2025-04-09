@@ -2,6 +2,8 @@
 
 @section('css')
 <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 @endsection
 
 @section('title')
@@ -66,7 +68,7 @@
                 <div class="card-header">
                     <h3 class="card-title">{{ __('messages.income_list') }}</h3>
                     @can('create-accounts')
-                        <a href="{{ route('accounts.create') }}" class="btn btn-primary float-right">{{ __('messages.add_account') }}</a>
+                        <button class="btn btn-primary float-right" data-toggle="modal" data-target="#addAccountModal">{{ __('messages.add_account') }}</button>
                     @endcan
                 </div>
                 <div class="card-body">
@@ -112,6 +114,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal for Adding Account -->
+    @can('create-accounts')
+    <div class="modal fade" id="addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAccountModalLabel">{{ __('messages.add_account') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <form id="addAccountForm">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>{{ __('messages.account_type') }}</label>
+                            <select name="type" class="form-control" required>
+                                <option value="">{{ __('messages.select_type') }}</option>
+                                <option value="income">{{ __('messages.income') }}</option>
+                                <option value="expense">{{ __('messages.expense') }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ __('messages.amount') }}</label>
+                            <input type="number" name="amount" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ __('messages.description') }}</label>
+                            <textarea name="description" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ __('messages.date') }}</label>
+                            <input type="datetime-local" name="date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('messages.add') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endcan
 @else
     <div class="alert alert-danger">
         {{ __('messages.error') }}: You do not have permission to view accounts.
@@ -122,6 +168,8 @@
 @section('js')
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
     $(document).ready(function () {
         @can('view-accounts')
@@ -147,6 +195,11 @@
                         searchable: false,
                         render: function (data, type, row) {
                             var actions = '';
+                            @can('view-accounts')
+                                // تعديل طريقة إنشاء الرابط
+                                var showUrl = "{{ route('accounts.show', '__ID__') }}".replace('__ID__', data);
+                                actions += '<a href="' + showUrl + '" class="btn btn-info btn-sm">{{ __("messages.view") }}</a> ';
+                            @endcan
                             @can('delete-accounts')
                                 actions += '<button class="btn btn-danger btn-sm delete-account" data-id="' + data + '">{{ __("messages.delete") }}</button>';
                             @endcan
@@ -189,6 +242,11 @@
                         searchable: false,
                         render: function (data, type, row) {
                             var actions = '';
+                            @can('view-accounts')
+                                // تعديل طريقة إنشاء الرابط
+                                var showUrl = "{{ route('accounts.show', '__ID__') }}".replace('__ID__', data);
+                                actions += '<a href="' + showUrl + '" class="btn btn-info btn-sm">{{ __("messages.view") }}</a> ';
+                            @endcan
                             @can('delete-accounts')
                                 actions += '<button class="btn btn-danger btn-sm delete-account" data-id="' + data + '">{{ __("messages.delete") }}</button>';
                             @endcan
@@ -211,31 +269,104 @@
                 order: [[4, 'desc']]
             });
 
-            // JavaScript لحذف الحساب
+            // Add Account via Modal
+            $('#addAccountForm').submit(function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: "{{ route('accounts.store') }}",
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '{{ __("messages.success") }}',
+                                text: response.message || '{{ __("messages.account_added_successfully") }}',
+                            });
+                            $('#addAccountModal').modal('hide');
+                            $('#addAccountForm')[0].reset();
+                            incomeTable.ajax.reload();
+                            expensesTable.ajax.reload();
+                            updateTotals();
+                        }
+                    },
+                    error: function (xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ __("messages.error") }}',
+                            text: xhr.responseJSON?.message || '{{ __("messages.error_adding_account") }}',
+                        });
+                    }
+                });
+            });
+
+            // Delete Account
             $(document).on('click', '.delete-account', function () {
                 var accountId = $(this).data('id');
-                if (confirm("{{ __('messages.confirm_delete') }}")) {
-                    $.ajax({
-                        url: "{{ route('accounts.destroy', ':id') }}".replace(':id', accountId),
-                        type: 'DELETE',
-                        data: {
-                            "_token": "{{ csrf_token() }}"
-                        },
-                        success: function (response) {
-                            if (response.success) {
-                                incomeTable.ajax.reload();
-                                expensesTable.ajax.reload();
-                                alert("{{ __('messages.account_deleted_successfully') }}");
-                            } else {
-                                alert("{{ __('messages.error') }}: " + response.message);
+                Swal.fire({
+                    title: '{{ __("messages.confirm_delete") }}',
+                    text: '{{ __("messages.delete_account_confirmation") }}',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: '{{ __("messages.delete") }}',
+                    cancelButtonText: '{{ __("messages.cancel") }}'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "{{ route('accounts.destroy', ':id') }}".replace(':id', accountId),
+                            type: 'DELETE',
+                            data: {
+                                "_token": "{{ csrf_token() }}"
+                            },
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: '{{ __("messages.success") }}',
+                                        text: response.message || '{{ __("messages.account_deleted_successfully") }}',
+                                    });
+                                    incomeTable.ajax.reload();
+                                    expensesTable.ajax.reload();
+                                    updateTotals();
+                                }
+                            },
+                            error: function (xhr) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '{{ __("messages.error") }}',
+                                    text: xhr.responseJSON?.message || '{{ __("messages.error_deleting_account") }}',
+                                });
                             }
-                        },
-                        error: function () {
-                            alert("{{ __('messages.error') }}");
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             });
+
+            // دالة لتحديث الإجماليات
+            function updateTotals() {
+                $.ajax({
+                    url: "{{ route('accounts.totals') }}",
+                    type: 'GET',
+                    data: { month: month },
+                    success: function (response) {
+                        $('.card-text').eq(0).text(response.totalIncome);
+                        $('.card-text').eq(1).text(response.totalExpenses);
+                        $('.card-text').eq(2).text(response.balance);
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ __("messages.error") }}',
+                            text: '{{ __("messages.error_fetching_totals") }}',
+                        });
+                    }
+                });
+            }
         @endcan
     });
 </script>

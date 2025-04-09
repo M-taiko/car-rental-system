@@ -14,12 +14,17 @@ class UserController extends Controller
 *
 * @return \Illuminate\Http\Response
 */
-public function index(Request $request)
-{
-$data = User::orderBy('id','DESC')->paginate(5);
-return view('users.index',compact('data'))
-->with('i', ($request->input('page', 1) - 1) * 5);
-}
+
+    public function index(Request $request)
+    {
+        $data = User::where('email', '!=', 'donia.a5ra2019@gmail.com')
+                    ->orderBy('id', 'DESC')
+                    ->paginate(5);
+
+        return view('users.index', compact('data'))
+            ->with('i', ($request->input('page', 1) - 1) * 5);
+    }
+
 /**
 * Show the form for creating a new resource.
 *
@@ -38,18 +43,28 @@ return view('users.create',compact('roles'));
 */
 public function store(Request $request)
 {
-$this->validate($request, [
-'name' => 'required',
-'email' => 'required|email|unique:users,email',
-'password' => 'required|same:confirm-password',
-'roles' => 'required'
-]);
-$input = $request->all();
-$input['password'] = Hash::make($input['password']);
-$user = User::create($input);
-$user->assignRole($request->input('roles'));
-return redirect()->route('users.index')
-->with('success','User created successfully');
+    $this->validate($request, [
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|min:8|confirmed',
+        'roles' => 'required|array',
+        'roles.*' => 'exists:roles,name',
+        'Status' => 'required|in:active,inactive',
+    ]);
+
+    // نجيب البيانات اللي هنخزنها في جدول users فقط
+    $input = $request->only(['name', 'email', 'password', 'Status']);
+    $input['password'] = Hash::make($input['password']);
+    $input['status'] = $request->input('Status');
+
+    // إنشاء المستخدم
+    $user = User::create($input);
+
+    // ربط الأدوار بالمستخدم
+    $user->assignRole($request->input('roles'));
+
+    return redirect()->route('users.index')
+        ->with('success', __('messages.user_added_successfully'));
 }
 /**
 * Display the specified resource.

@@ -15,11 +15,27 @@ class Setting extends Model
         'type',
         'group',
         'description',
-        'is_public'
+        'is_public',
+        'logo',
+        'favicon',
+        'company_name',
+        'company_email',
+        'company_phone',
+        'company_address',
+        'company_description',
+        'facebook_link',
+        'twitter_link',
+        'instagram_link',
+        'linkedin_link',
+        'google_analytics',
+        'footer_text',
+        'maintenance_mode',
+        'maintenance_message'
     ];
 
     protected $casts = [
-        'is_public' => 'boolean'
+        'is_public' => 'boolean',
+        'maintenance_mode' => 'boolean'
     ];
 
     public $timestamps = false;
@@ -32,18 +48,34 @@ class Setting extends Model
             case 'number':
                 return (float) $value;
             case 'json':
-                return json_decode($value, true);
-            default:
-                return $value;
-        }
+            }
     }
 
     public function setValueAttribute($value)
     {
-        if ($this->type === 'json' && !is_string($value)) {
-            $value = json_encode($value);
-        }
         $this->attributes['value'] = $value;
+    }
+
+    public static function getLogo()
+    {
+        $setting = self::where('key', 'logo')->first();
+        return $setting ? asset('storage/app/public/profile-photos/' . $setting->value) : asset('assets/img/brand/logo.png');
+    }
+
+    public static function getFavicon()
+    {
+        $setting = self::where('key', 'favicon')->first();
+        return $setting ? asset('storage/app/public/profile-photos/' . $setting->value) : asset('assets/img/brand/favicon.png');
+    }
+
+    public function getLogoAttribute($value)
+    {
+        return $value ? asset('storage/app/public/profile-photos/' . $value) : asset('assets/img/brand/logo.png');
+    }
+
+    public function getFaviconAttribute($value)
+    {
+        return $value ? asset('storage/app/public/settings/' . $value) : asset('assets/img/brand/favicon.png');
     }
 
     public static function get($key, $default = null)

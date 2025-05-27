@@ -34,10 +34,10 @@ class ProfileController extends Controller
                 // Upload new photo to public directory
                 $file = $request->file('profile_photo');
                 $filename = time() . '_' . $file->getClientOriginalName();
-                $path = 'app/public/profile-photos/' . $filename;
+                $path = 'profile-photos/' . $filename;
                 
-                // Move file to public directory
-                $file->move(storage_path('app/public/profile-photos'), $filename);
+                // Store file using Storage facade
+                $request->file('profile_photo')->storeAs('public', $path);
                 
                 Auth::user()->update([
                     'profile_photo_path' => $path

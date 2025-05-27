@@ -52,13 +52,14 @@ class SettingController extends Controller
                     Storage::disk('public')->delete($oldLogo);
                 }
 
-                // Store new logo
-                $logoPath = $request->file('company_logo')->store('settings', 'public');
+                // Store new logo in settings directory
+                $path = 'settings/' . time() . '_' . $request->file('company_logo')->getClientOriginalName();
+                $request->file('company_logo')->storeAs('public', $path);
 
                 // Save logo path in database
                 Setting::updateOrCreate(
                     ['key' => 'company_logo'],
-                    ['value' => $logoPath]
+                    ['value' => $path]
                 );
             }
 

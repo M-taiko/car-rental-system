@@ -16,3 +16,8 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+.htaccess
+storage/app/public/profile-photos
+storage/app/public/settings
+storage/app/public/logos
+storage/app/public/cars

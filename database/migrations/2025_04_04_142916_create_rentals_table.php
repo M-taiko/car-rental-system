@@ -13,13 +13,22 @@ return new class extends Migration
     {
         Schema::create('rentals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bike_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->timestamp('start_time');
-            $table->timestamp('end_time')->nullable();
-            $table->decimal('total_cost', 8, 2)->nullable();
-            $table->enum('status', ['ongoing', 'completed'])->default('ongoing');
+            $table->foreignId('car_id')->constrained()->onDelete('restrict');
+            $table->foreignId('customer_id')->constrained()->onDelete('restrict');
+            $table->foreignId('driver_id')->nullable()->constrained()->onDelete('restrict');
+            $table->dateTime('start_time');
+            $table->dateTime('expected_end_time');
+            $table->dateTime('actual_end_time')->nullable();
+            $table->decimal('price_per_day', 10, 2);
+            $table->decimal('driver_price_per_day', 10, 2)->nullable();
+            $table->decimal('expected_amount', 10, 2);
+            $table->decimal('actual_amount', 10, 2)->nullable();
+            $table->decimal('paid_amount', 10, 2)->default(0);
+            $table->decimal('refunded_amount', 10, 2)->default(0);
+            $table->enum('status', ['active', 'completed', 'cancelled'])->default('active');
+            $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

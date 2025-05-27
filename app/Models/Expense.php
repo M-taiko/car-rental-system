@@ -10,8 +10,20 @@ class Expense extends Model
 {
 
     use HasFactory;
-    protected $fillable = ['amount', 'description', 'date'];
+    protected $fillable = ['type', 'amount', 'description', 'date'];
 
-    
+    public static function getTypes()
+    {
+        return [
+            'maintenance' => __('messages.maintenance'),
+            'fuel' => __('messages.fuel'),
+            'salary' => __('messages.salary'),
+            'rent' => __('messages.rent'),
+            'utilities' => __('messages.utilities'),
+            'insurance' => __('messages.insurance'),
+            'marketing' => __('messages.marketing'),
+            'other' => __('messages.other'),
+        ];
+    }
 }
 

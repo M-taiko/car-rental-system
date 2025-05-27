@@ -21,16 +21,14 @@ class CreateAdminUserSeeder extends Seeder
             'name' => 'Mohamed Tarek Hussain',
             'email' => 'donia.a5ra2019@gmail.com',
             'password' => bcrypt('123456789'), // Ensure strong password hashing
-            'roles_name' => 'SuperAdmin',
-            'status' =>'active'
+            'status' => 'active'
         ]);
 
         // Create the role if it doesn't exist
         $role = Role::firstOrCreate(['name' => 'SuperAdmin']);
 
         // Sync permissions
-        $permissions = Permission::pluck('id' ,'id')->all();
-
+        $permissions = Permission::pluck('id', 'id')->all();
         $role->syncPermissions($permissions);
 
         // Assign the role to the user

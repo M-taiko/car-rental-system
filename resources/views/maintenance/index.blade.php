@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-    {{ __('messages.maintenance') }} - {{ __('messages.BIKE_RENTAL_SYSTEM') }}
+    {{ __('messages.maintenance') }} - {{ __('messages.CAR_RENTAL_SYSTEM') }}
 @endsection
 
 @section('page-header')
@@ -51,7 +51,7 @@
                     <thead>
                         <tr>
                             <th>{{ __('messages.id') }}</th>
-                            <th>{{ __('messages.bike') }}</th>
+                            <th>{{ __('messages.car') }}</th>
                             <th>{{ __('messages.type') }}</th>
                             <th>{{ __('messages.customer') }}</th>
                             <th>{{ __('messages.phone') }}</th>
@@ -95,12 +95,12 @@
                             <option value="customer">{{ __('messages.customer') }}</option>
                         </select>
                     </div>
-                    <div class="form-group" id="bikeField" style="display: none;">
-                        <label>{{ __('messages.bike') }}</label>
-                        <select name="bike_id" class="form-control">
-                            <option value="">{{ __('messages.select_bike') }}</option>
-                            @foreach($bikes as $bike)
-                                <option value="{{ $bike->id }}">{{ $bike->name }}</option>
+                    <div class="form-group" id="carField" style="display: none;">
+                        <label>{{ __('messages.car') }}</label>
+                        <select name="car_id" class="form-control">
+                            <option value="">{{ __('messages.select_car') }}</option>
+                            @foreach($cars as $car)
+                                <option value="{{ $car->id }}">{{ $car->brand }} {{ $car->model }} ({{ $car->plate_number }})</option>
                             @endforeach
                         </select>
                     </div>
@@ -188,7 +188,7 @@
 @endcan
 
 <!-- Modal for Adding Customer -->
-@can('create-maintenance') <!-- إضافة عميل جديد مرتبط بإضافة صيانة -->
+@can('create-maintenance')
 <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -207,6 +207,10 @@
                     <div class="form-group">
                         <label>{{ __('messages.phone') }}</label>
                         <input type="text" name="phone" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ __('messages.address') }}</label>
+                        <textarea name="address" class="form-control"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -232,356 +236,206 @@
     $(document).ready(function () {
         console.log('jQuery is loaded and document is ready'); // Debugging
 
-        // Show/hide fields based on type
-        $('#maintenanceType').change(function () {
-            var type = $(this).val();
-            console.log('Maintenance Type Changed:', type); // Debugging
-            if (type === 'internal') {
-                $('#bikeField').show();
-                $('#bikeField select').attr('required', true);
-                $('#customerField').hide();
-                $('#customerField select').removeAttr('required');
-            } else if (type === 'customer') {
-                $('#bikeField').show();
-                $('#bikeField select').removeAttr('required');
-                $('#customerField').show();
-                $('#customerField select').attr('required', true);
-            } else {
-                $('#bikeField').hide();
-                $('#bikeField select').removeAttr('required');
-                $('#customerField').hide();
-                $('#customerField select').removeAttr('required');
-            }
-        });
-
-        // Show/hide parts table based on radio button
-        $('input[name="use_parts"]').change(function () {
-            if ($(this).val() === 'yes') {
-                $('#partsField').show();
-                $('#partsTableBody .part-row').each(function () {
-                    $(this).find('.spare-part-select').attr('required', true);
-                    $(this).find('.part-quantity').attr('required', true);
-                });
-            } else {
-                $('#partsField').hide();
-                $('#partsTableBody .part-row').each(function () {
-                    $(this).find('.spare-part-select').removeAttr('required');
-                    $(this).find('.part-quantity').removeAttr('required');
-                });
-                $('#totalPartsCost').text('0.00');
-                updateTotalCost();
-            }
-        });
-
-        // Add new part row
-        let partIndex = 1;
-        $('#addPart').click(function () {
-            const newRow = `
-                <tr class="part-row">
-                    <td>
-                        <select name="parts[${partIndex}][spare_part_id]" class="form-control spare-part-select" required>
-                            <option value="">{{ __('messages.select_part') }}</option>
-                            @foreach($spareParts as $part)
-                                <option value="{{ $part->id }}" data-price="{{ $part->selling_price }}" data-quantity="{{ $part->quantity }}">{{ $part->name }} ({{ $part->quantity }} {{ __('messages.available') }})</option>
-                            @endforeach
-                        </select>
-                    </td>
-                    <td><input type="number" name="parts[${partIndex}][quantity]" class="form-control part-quantity" min="1" required></td>
-                    <td><span class="part-price">0.00</span></td>
-                    <td><span class="part-total">0.00</span></td>
-                    <td><button type="button" class="btn btn-danger btn-sm remove-part">{{ __('messages.remove') }}</button></td>
-                </tr>
-            `;
-            $('#partsTableBody').append(newRow);
-            partIndex++;
-            updateTotalPartsCost();
-        });
-
-        // Remove part row
-        $(document).on('click', '.remove-part', function () {
-            $(this).closest('tr').remove();
-            updateTotalPartsCost();
-        });
-
-        // Update part price and total on selection
-        $(document).on('change', '.spare-part-select', function () {
-            const row = $(this).closest('tr');
-            const price = $(this).find('option:selected').data('price') || 0;
-            const quantityAvailable = $(this).find('option:selected').data('quantity') || 0;
-            row.find('.part-price').text(parseFloat(price).toFixed(2));
-            const quantity = parseInt(row.find('.part-quantity').val()) || 0;
-            if (quantity > quantityAvailable) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: '{{ __("messages.insufficient_quantity_alert") }}',
-                    text: '{{ __("messages.insufficient_quantity_message") }}',
-                });
-                row.find('.part-quantity').val(quantityAvailable);
-            }
-            row.find('.part-total').text((price * quantity).toFixed(2));
-            updateTotalPartsCost();
-        });
-
-        // Update part total on quantity change
-        $(document).on('input', '.part-quantity', function () {
-            const row = $(this).closest('tr');
-            const price = parseFloat(row.find('.part-price').text()) || 0;
-            const quantity = parseInt($(this).val()) || 0;
-            const quantityAvailable = parseInt(row.find('.spare-part-select option:selected').data('quantity')) || 0;
-            if (quantity > quantityAvailable) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: '{{ __("messages.insufficient_quantity_alert") }}',
-                    text: '{{ __("messages.insufficient_quantity_message") }}',
-                });
-                $(this).val(quantityAvailable);
-            }
-            row.find('.part-total').text((price * quantity).toFixed(2));
-            updateTotalPartsCost();
-        });
-
-        // Update total parts cost
-        function updateTotalPartsCost() {
-            let totalPartsCost = 0;
-            $('.part-total').each(function () {
-                const cost = parseFloat($(this).text()) || 0;
-                totalPartsCost += cost;
-            });
-            $('#totalPartsCost').text(totalPartsCost.toFixed(2));
-            updateTotalCost();
-        }
-
-        // Update total cost (maintenance + parts)
-        function updateTotalCost() {
-            const maintenanceCost = parseFloat($('#maintenanceCost').val()) || 0;
-            const totalPartsCost = parseFloat($('#totalPartsCost').text()) || 0;
-            const totalCost = maintenanceCost + totalPartsCost;
-            $('#totalCost').val(totalCost.toFixed(2));
-        }
-
-        // Update total cost when maintenance cost changes
-        $('#maintenanceCost').on('input', function () {
-            updateTotalCost();
-        });
-
-        // DataTable
-        console.log('Initializing DataTable'); // Debugging
+        // تهيئة DataTables
         var table = $('#maintenanceTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: {
-                url: '{{ route("maintenance.data") }}',
-                type: 'GET',
-                error: function (xhr, error, thrown) {
-                    console.log('DataTable AJAX Error:', xhr, error, thrown); // Debugging
-                    if (xhr.status === 401) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Unauthorized',
-                            text: 'Please log in to view maintenance records.',
-                            confirmButtonText: 'Login',
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = "{{ route('login') }}";
-                            }
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'An error occurred while fetching data: ' + (xhr.responseJSON?.error || thrown),
-                        });
-                    }
-                }
-            },
+            ajax: "{{ route('maintenance.data') }}",
             columns: [
-                { data: 'id', name: 'id' },
-                { data: 'bike_name', name: 'bike_name' },
-                { data: 'type', name: 'type' },
-                { data: 'customer_name', name: 'customer_name' },
-                { data: 'customer_phone', name: 'customer_phone' },
-                { data: 'cost', name: 'cost' },
-                { data: 'description', name: 'description' },
-                { data: 'date', name: 'date' },
-                { data: 'status', name: 'status' },
-                { data: 'action', name: 'action', orderable: false, searchable: false }
+                {data: 'id', name: 'id'},
+                {data: 'car_info', name: 'car_info'},
+                {data: 'type', name: 'type'},
+                {data: 'customer_name', name: 'customer_name'},
+                {data: 'customer_phone', name: 'customer_phone'},
+                {data: 'cost', name: 'cost'},
+                {data: 'description', name: 'description'},
+                {data: 'start_date', name: 'start_date'},
+                {data: 'status', name: 'status'},
+                {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
-            language: {
-                "emptyTable": "{{ __('messages.no_data_available') }}",
-                search: "{{ __('messages.search_maintenance') }}",
-                lengthMenu: "{{ __('messages.show_entries') }}",
-                zeroRecords: "{{ __('messages.no_maintenance_found') }}",
-                info: "{{ __('messages.showing_info') }}",
-                infoEmpty: "{{ __('messages.no_maintenance_available') }}",
-                processing: "{{ __('messages.processing') }}",
-                paginate: {
-                    next: "{{ __('messages.next') }}",
-                    previous: "{{ __('messages.previous') }}"
-                }
-            },
-            order: [[7, 'desc']] // Order by date descending
+            order: [[0, 'desc']]
         });
 
-        // Add Maintenance
-        $('#addMaintenanceForm').submit(function (e) {
+        // إظهار/إخفاء حقول العميل والسيارة حسب نوع الصيانة
+        $('#maintenanceType').change(function() {
+            var type = $(this).val();
+            if (type === 'customer') {
+                $('#customerField').show();
+                $('#carField').show();
+            } else if (type === 'internal') {
+                $('#customerField').hide();
+                $('#carField').show();
+                $('#customerSelect').val('');
+            } else {
+                $('#customerField').hide();
+                $('#carField').hide();
+                $('#customerSelect').val('');
+            }
+        });
+
+        // إظهار/إخفاء حقل قطع الغيار
+        $('input[name="use_parts"]').change(function() {
+            if ($(this).val() === 'yes') {
+                $('#partsField').show();
+            } else {
+                $('#partsField').hide();
+            }
+            calculateTotalCost();
+        });
+
+        // إضافة صف جديد لقطع الغيار
+        $('#addPart').click(function() {
+            var rowCount = $('.part-row').length;
+            var newRow = $('.part-row').first().clone();
+            newRow.find('select').attr('name', 'parts[' + rowCount + '][spare_part_id]').val('');
+            newRow.find('input').attr('name', 'parts[' + rowCount + '][quantity]').val('');
+            newRow.find('.part-price').text('0.00');
+            newRow.find('.part-total').text('0.00');
+            $('#partsTableBody').append(newRow);
+        });
+
+        // حذف صف قطع الغيار
+        $(document).on('click', '.remove-part', function() {
+            if ($('.part-row').length > 1) {
+                $(this).closest('tr').remove();
+                calculateTotalCost();
+            }
+        });
+
+        // حساب السعر الإجمالي عند تغيير الكمية أو القطعة
+        $(document).on('change', '.spare-part-select, .part-quantity', function() {
+            var row = $(this).closest('tr');
+            var selectedOption = row.find('.spare-part-select option:selected');
+            var price = parseFloat(selectedOption.data('price')) || 0;
+            var quantity = parseInt(row.find('.part-quantity').val()) || 0;
+            var maxQuantity = parseInt(selectedOption.data('quantity')) || 0;
+
+            // التحقق من الكمية المتاحة
+            if (quantity > maxQuantity) {
+                alert('{{ __("messages.quantity_not_available") }}');
+                row.find('.part-quantity').val(maxQuantity);
+                quantity = maxQuantity;
+            }
+
+            row.find('.part-price').text(price.toFixed(2));
+            row.find('.part-total').text((price * quantity).toFixed(2));
+            calculateTotalCost();
+        });
+
+        // حساب التكلفة الإجمالية
+        function calculateTotalCost() {
+            var partsCost = 0;
+            if ($('#usePartsYes').is(':checked')) {
+                $('.part-total').each(function() {
+                    partsCost += parseFloat($(this).text()) || 0;
+                });
+            }
+            $('#totalPartsCost').text(partsCost.toFixed(2));
+
+            var maintenanceCost = parseFloat($('#maintenanceCost').val()) || 0;
+            var totalCost = maintenanceCost + partsCost;
+            $('#totalCost').val(totalCost.toFixed(2));
+        }
+
+        // حساب التكلفة الإجمالية عند تغيير تكلفة الصيانة
+        $('#maintenanceCost').on('input', calculateTotalCost);
+
+        // إضافة عميل جديد
+        $('#addCustomerForm').submit(function(e) {
             e.preventDefault();
-            console.log('Add Maintenance Form Submitted'); // Debugging
-            console.log('Form Data:', $(this).serialize()); // Debugging
             $.ajax({
-                url: '{{ route("maintenance.store") }}',
-                type: 'POST',
+                url: "{{ route('maintenance.storeCustomer') }}",
+                method: 'POST',
                 data: $(this).serialize(),
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                success: function (response) {
-                    console.log('Add Maintenance Success:', response); // Debugging
+                success: function(response) {
                     if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: response.message || '{{ __("messages.maintenance_added_successfully") }}',
-                        });
-                        $('#addMaintenanceModal').modal('hide');
-                        table.ajax.reload();
-                    }
-                },
-                error: function (xhr) {
-                    console.log('Add Maintenance Error:', xhr); // Debugging
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: xhr.responseJSON?.message || '{{ __("messages.error_adding_maintenance") }}',
-                    });
-                }
-            });
-        });
-
-        // Add Customer
-        $('#addCustomerForm').submit(function (e) {
-            e.preventDefault();
-            console.log('Add Customer Form Submitted'); // Debugging
-            console.log('Customer Form Data:', $(this).serialize()); // Debugging
-            $.ajax({
-                url: '{{ route("maintenance.storeCustomer") }}',
-                type: 'POST',
-                data: $(this).serialize(),
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                success: function (response) {
-                    console.log('Add Customer Success:', response); // Debugging
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: response.message || '{{ __("messages.customer_added_successfully") }}',
-                        });
+                        var newOption = new Option(response.customer.name + ' (' + response.customer.phone + ')', response.customer.id);
+                        $('#customerSelect').append(newOption);
+                        $('#customerSelect').val(response.customer.id);
                         $('#addCustomerModal').modal('hide');
                         $('#addCustomerForm')[0].reset();
-                        $('#customerSelect').append('<option value="' + response.customer.id + '">' + response.customer.name + ' (' + response.customer.phone + ')</option>');
-                        $('#customerSelect').val(response.customer.id);
+                        alert('{{ __("messages.customer_added_successfully") }}');
                     }
                 },
-                error: function (xhr) {
-                    console.log('Add Customer Error:', xhr); // Debugging
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: xhr.responseJSON?.message || '{{ __("messages.error_adding_customer") }}',
-                    });
+                error: function(xhr) {
+                    var errors = xhr.responseJSON.errors;
+                    alert(Object.values(errors).flat().join('\n'));
                 }
             });
         });
 
-        // Complete Maintenance
-        $(document).on('click', '.complete-maintenance', function () {
-            var id = $(this).data('id');
-            console.log('Complete Maintenance Clicked, ID:', id); // Debugging
-            Swal.fire({
-                title: '{{ __("messages.confirm_complete_maintenance") }}',
-                text: '{{ __("messages.complete_maintenance_confirmation") }}',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: '{{ __("messages.complete") }}',
-                cancelButtonText: '{{ __("messages.cancel") }}'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '{{ url("maintenance") }}/' + id + '/complete',
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function (response) {
-                            console.log('Complete Maintenance Success:', response); // Debugging
-                            if (response.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Success',
-                                    text: response.message || '{{ __("messages.maintenance_completed_successfully") }}',
-                                });
-                                table.ajax.reload();
-                            }
-                        },
-                        error: function (xhr) {
-                            console.log('Complete Maintenance Error:', xhr); // Debugging
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: xhr.responseJSON?.message || '{{ __("messages.error_completing_maintenance") }}',
-                            });
-                        }
-                    });
+        // إضافة صيانة جديدة
+        $('#addMaintenanceForm').submit(function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            $.ajax({
+                url: "{{ route('maintenance.store') }}",
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        $('#addMaintenanceModal').modal('hide');
+                        $('#addMaintenanceForm')[0].reset();
+                        table.ajax.reload();
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    var errors = xhr.responseJSON.errors;
+                    alert(Object.values(errors).flat().join('\n'));
                 }
             });
         });
 
-        // Delete Maintenance
-        $(document).on('click', '.delete-maintenance', function () {
+        // إكمال الصيانة
+        $(document).on('click', '.complete-maintenance', function() {
             var id = $(this).data('id');
-            console.log('Delete Maintenance Clicked, ID:', id); // Debugging
-            Swal.fire({
-                title: '{{ __("messages.confirm_delete_maintenance") }}',
-                text: '{{ __("messages.delete_maintenance_confirmation") }}',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: '{{ __("messages.delete") }}',
-                cancelButtonText: '{{ __("messages.cancel") }}'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '{{ url("maintenance") }}/' + id,
-                        type: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function (response) {
-                            console.log('Delete Maintenance Success:', response); // Debugging
-                            if (response.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted',
-                                    text: response.message || '{{ __("messages.maintenance_deleted_successfully") }}',
-                                });
-                                table.ajax.reload();
-                            }
-                        },
-                        error: function (xhr) {
-                            console.log('Delete Maintenance Error:', xhr); // Debugging
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: xhr.responseJSON?.message || '{{ __("messages.error_deleting_maintenance") }}',
-                            });
+            if (confirm('{{ __("messages.confirm_complete_maintenance") }}')) {
+                $.ajax({
+                    url: "{{ url('maintenance') }}/" + id + "/complete",
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            table.ajax.reload();
+                            alert(response.message);
                         }
-                    });
-                }
-            });
+                    },
+                    error: function(xhr) {
+                        alert(xhr.responseJSON.message);
+                    }
+                });
+            }
+        });
+
+        // حذف الصيانة
+        $(document).on('click', '.delete-maintenance', function() {
+            var id = $(this).data('id');
+            if (confirm('{{ __("messages.confirm_delete_maintenance") }}')) {
+                $.ajax({
+                    url: "{{ url('maintenance') }}/" + id,
+                    method: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            table.ajax.reload();
+                            alert(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert(xhr.responseJSON.message);
+                    }
+                });
+            }
         });
     });
 </script>

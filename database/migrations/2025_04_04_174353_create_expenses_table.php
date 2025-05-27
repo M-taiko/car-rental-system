@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('expenses', function (Blueprint $table) {
             $table->id();
+            $table->enum('type', ['salary', 'maintenance', 'utilities', 'rent', 'other']);
             $table->decimal('amount', 10, 2);
             $table->string('description')->nullable();
             $table->dateTime('date');

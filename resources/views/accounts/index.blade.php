@@ -19,7 +19,15 @@
         </div>
     </div>
     <div class="d-flex my-xl-auto right-content">
-        @can('view-accounts')
+        @can('account-create')
+            <button class="btn btn-success mr-2" data-toggle="modal" data-target="#addIncomeModal">
+                <i class="fas fa-plus"></i> {{ __('messages.add_income') }}
+            </button>
+            <button class="btn btn-warning mr-2" data-toggle="modal" data-target="#addExpenseModal">
+                <i class="fas fa-minus"></i> {{ __('messages.add_expense') }}
+            </button>
+        @endcan
+        @can('account-list')
             <form method="GET" action="{{ route('accounts.index') }}">
                 <div class="input-group">
                     <input type="month" name="month" class="form-control" value="{{ $month }}">
@@ -34,7 +42,7 @@
 @endsection
 
 @section('content')
-@can('view-accounts')
+@can('account-list')
     <div class="row">
         <div class="col-md-4">
             <div class="card">
@@ -67,9 +75,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">{{ __('messages.income_list') }}</h3>
-                    @can('create-accounts')
-                        <button class="btn btn-primary float-right" data-toggle="modal" data-target="#addAccountModal">{{ __('messages.add_account') }}</button>
-                    @endcan
+
                 </div>
                 <div class="card-body">
                     <table id="incomeTable" class="table table-center table-bordered table-striped">
@@ -115,25 +121,69 @@
         </div>
     </div>
 
-    <!-- Modal for Adding Account -->
-    @can('create-accounts')
-    <div class="modal fade" id="addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+    <!-- Modal for Adding Income -->
+    @can('account-create')
+    <div class="modal fade" id="addIncomeModal" tabindex="-1" role="dialog" aria-labelledby="addIncomeModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addAccountModalLabel">{{ __('messages.add_account') }}</h5>
+                    <h5 class="modal-title" id="addIncomeModalLabel">{{ __('messages.add_income') }}</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
-                <form id="addAccountForm">
+                <form id="addIncomeForm">
+                    @csrf
                     <div class="modal-body">
+                        <input type="hidden" name="type" value="income">
                         <div class="form-group">
-                            <label>{{ __('messages.account_type') }}</label>
-                            <select name="type" class="form-control" required>
+                            <label>{{ __('messages.amount') }}</label>
+                            <input type="number" name="amount" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ __('messages.description') }}</label>
+                            <textarea name="description" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ __('messages.date') }}</label>
+                            <input type="datetime-local" name="date" class="form-control" required value="{{ now()->format('Y-m-d\TH:i') }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
+                        <button type="submit" class="btn btn-success">{{ __('messages.add_income') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Expense -->
+    <div class="modal fade" id="addExpenseModal" tabindex="-1" role="dialog" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addExpenseModalLabel">{{ __('messages.add_expense') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <form id="addExpenseForm">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="type" value="expense">
+                        <div class="form-group">
+                            <label>{{ __('messages.expense_type') }}</label>
+                            <select name="expense_type" class="form-control" required>
                                 <option value="">{{ __('messages.select_type') }}</option>
-                                <option value="income">{{ __('messages.income') }}</option>
-                                <option value="expense">{{ __('messages.expense') }}</option>
+                                <option value="maintenance">{{ __('messages.maintenance') }}</option>
+                                <option value="fuel">{{ __('messages.fuel') }}</option>
+                                <option value="salary">{{ __('messages.salary') }}</option>
+                                <option value="rent">{{ __('messages.rent') }}</option>
+                                <option value="utilities">{{ __('messages.utilities') }}</option>
+                                <option value="insurance">{{ __('messages.insurance') }}</option>
+                                <option value="marketing">{{ __('messages.marketing') }}</option>
+                                <option value="other">{{ __('messages.other') }}</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -146,12 +196,12 @@
                         </div>
                         <div class="form-group">
                             <label>{{ __('messages.date') }}</label>
-                            <input type="datetime-local" name="date" class="form-control" required>
+                            <input type="datetime-local" name="date" class="form-control" required value="{{ now()->format('Y-m-d\TH:i') }}">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
-                        <button type="submit" class="btn btn-primary">{{ __('messages.add') }}</button>
+                        <button type="submit" class="btn btn-warning">{{ __('messages.add_expense') }}</button>
                     </div>
                 </form>
             </div>
@@ -172,8 +222,135 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <script>
     $(document).ready(function () {
-        @can('view-accounts')
+        // Setup AJAX CSRF token
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        @can('account-list')
             var month = "{{ $month }}";
+
+            // Handle Income Form Submission
+            $('#addIncomeForm').submit(function(e) {
+                e.preventDefault();
+                var formData = $(this).serializeArray();
+                var data = {};
+
+                // Convert form data to object
+                $(formData).each(function(index, obj){
+                    data[obj.name] = obj.value;
+                });
+
+                $.ajax({
+                    url: "{{ route('accounts.storeIncome') }}",
+                    method: 'POST',
+                    data: data,
+                    success: function(response) {
+                        if (response.success) {
+                            // Properly close the modal using Bootstrap's modal method
+                            $('#addIncomeModal').modal('hide');
+                            // Clear the form
+                            $('#addIncomeForm')[0].reset();
+                            // Remove the modal backdrop manually if it persists
+                            $('.modal-backdrop').remove();
+                            // Remove modal-open class from body
+                            $('body').removeClass('modal-open');
+
+                            incomeTable.ajax.reload();
+                            expensesTable.ajax.reload();
+                            updateTotals();
+                            Swal.fire({
+                                icon: 'success',
+                                title: '{{ __("messages.success") }}',
+                                text: response.message
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ __("messages.error") }}',
+                                text: response.message || '{{ __("messages.something_went_wrong") }}'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        var message = '';
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            message = Object.values(xhr.responseJSON.errors).join('\n');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        } else {
+                            message = '{{ __("messages.something_went_wrong") }}';
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ __("messages.error") }}',
+                            text: message
+                        });
+                    }
+                });
+            });
+
+            // Handle Expense Form Submission
+            $('#addExpenseForm').submit(function(e) {
+                e.preventDefault();
+                var formData = $(this).serializeArray();
+                var data = {};
+
+                // Convert form data to object
+                $(formData).each(function(index, obj){
+                    data[obj.name] = obj.value;
+                });
+
+                $.ajax({
+                    url: "{{ route('accounts.storeExpense') }}",
+                    method: 'POST',
+                    data: data,
+                    success: function(response) {
+                        if (response.success) {
+                            // Properly close the modal using Bootstrap's modal method
+                            $('#addExpenseModal').modal('hide');
+                            // Clear the form
+                            $('#addExpenseForm')[0].reset();
+                            // Remove the modal backdrop manually if it persists
+                            $('.modal-backdrop').remove();
+                            // Remove modal-open class from body
+                            $('body').removeClass('modal-open');
+
+                            incomeTable.ajax.reload();
+                            expensesTable.ajax.reload();
+                            updateTotals();
+                            Swal.fire({
+                                icon: 'success',
+                                title: '{{ __("messages.success") }}',
+                                text: response.message
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ __("messages.error") }}',
+                                text: response.message || '{{ __("messages.something_went_wrong") }}'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        var message = '';
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            message = Object.values(xhr.responseJSON.errors).join('\n');
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        } else {
+                            message = '{{ __("messages.something_went_wrong") }}';
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ __("messages.error") }}',
+                            text: message
+                        });
+                    }
+                });
+            });
 
             var incomeTable = $('#incomeTable').DataTable({
                 processing: true,
@@ -269,39 +446,7 @@
                 order: [[4, 'desc']]
             });
 
-            // Add Account via Modal
-            $('#addAccountForm').submit(function (e) {
-                e.preventDefault();
-                $.ajax({
-                    url: "{{ route('accounts.store') }}",
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: '{{ __("messages.success") }}',
-                                text: response.message || '{{ __("messages.account_added_successfully") }}',
-                            });
-                            $('#addAccountModal').modal('hide');
-                            $('#addAccountForm')[0].reset();
-                            incomeTable.ajax.reload();
-                            expensesTable.ajax.reload();
-                            updateTotals();
-                        }
-                    },
-                    error: function (xhr) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ __("messages.error") }}',
-                            text: xhr.responseJSON?.message || '{{ __("messages.error_adding_account") }}',
-                        });
-                    }
-                });
-            });
+
 
             // Delete Account
             $(document).on('click', '.delete-account', function () {

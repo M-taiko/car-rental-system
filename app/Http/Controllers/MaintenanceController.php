@@ -3,21 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Maintenance;
-use App\Models\Bike;
+use App\Models\Car;
 use App\Models\Customer;
 use App\Models\Account;
 use App\Models\SparePart;
+use App\Models\MaintenancePart;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
 class MaintenanceController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:view-maintenance')->only(['index', 'show']);
+        $this->middleware('permission:create-maintenance')->only(['create', 'store']);
+        $this->middleware('permission:complete-maintenance')->only(['complete']);
+        $this->middleware('permission:delete-maintenance')->only(['destroy']);
+    }
+
     public function index()
     {
-        $bikes = Bike::all();
+        $cars = Car::all();
         $customers = Customer::all();
         $spareParts = SparePart::where('quantity', '>', 0)->get(); // جلب قطع الغيار المتاحة فقط
-        return view('maintenance.index', compact('bikes', 'customers', 'spareParts'));
+        return view('maintenance.index', compact('cars', 'customers', 'spareParts'));
     }
 
     public function getMaintenanceData(Request $request)
@@ -38,17 +47,17 @@ class MaintenanceController extends Controller
                 return response()->json(['error' => 'Unauthorized. You do not have permission to view maintenance records.'], 403);
             }
 
-            $maintenances = Maintenance::with(['bike', 'customer'])->select('maintenance.*');
+            $maintenances = Maintenance::with(['car', 'customer'])->select('maintenance.*');
 
             return DataTables::of($maintenances)
-                ->addColumn('bike_name', function ($maintenance) {
-                    return $maintenance->bike ? $maintenance->bike->name : '-';
+                ->addColumn('car_info', function ($maintenance) {
+                    return $maintenance->car->brand . ' ' . $maintenance->car->model . ' (' . $maintenance->car->plate_number . ')';
                 })
                 ->addColumn('customer_name', function ($maintenance) {
-                    return $maintenance->type === 'customer' && $maintenance->customer ? $maintenance->customer->name : '-';
+                    return $maintenance->customer ? $maintenance->customer->name : 'صيانة داخلية';
                 })
                 ->addColumn('customer_phone', function ($maintenance) {
-                    return $maintenance->type === 'customer' && $maintenance->customer ? $maintenance->customer->phone : '-';
+                    return $maintenance->customer ? $maintenance->customer->phone : '-';
                 })
                 ->addColumn('type', function ($maintenance) {
                     return $maintenance->type === 'internal' ? __('messages.internal') : __('messages.customer');
@@ -86,7 +95,7 @@ class MaintenanceController extends Controller
     {
         try {
             $validated = $request->validate([
-                'bike_id' => 'required_if:type,internal|nullable|exists:bikes,id',
+                'car_id' => 'required|exists:cars,id',
                 'type' => 'required|in:internal,customer',
                 'customer_id' => 'required_if:type,customer|nullable|exists:customers,id',
                 'cost' => 'required|numeric|min:0',
@@ -119,7 +128,7 @@ class MaintenanceController extends Controller
 
             // إنشاء سجل الصيانة
             $maintenance = Maintenance::create([
-                'bike_id' => $request->bike_id,
+                'car_id' => $request->car_id,
                 'type' => $request->type,
                 'customer_id' => $request->type === 'customer' ? $request->customer_id : null,
                 'cost' => $totalCost,
@@ -140,6 +149,16 @@ class MaintenanceController extends Controller
                         'quantity' => $part['quantity'],
                     ]);
                 }
+            }
+
+            // إنشاء مصروف للصيانة
+            if ($maintenance->type === 'internal') {
+                Account::create([
+                    'amount' => $maintenance->cost,
+                    'type' => 'expense',
+                    'description' => 'مصروف صيانة للسيارة: ' . $maintenance->car->brand . ' ' . $maintenance->car->model . ' (المعرف: ' . $maintenance->id . ')',
+                    'date' => now()
+                ]);
             }
 
             return response()->json(['success' => true, 'message' => __('messages.maintenance_added')]);
@@ -174,8 +193,18 @@ class MaintenanceController extends Controller
         try {
             $maintenance = Maintenance::findOrFail($id);
 
+            if ($maintenance->status === 'completed') {
+                return response()->json(['success' => false, 'message' => __('messages.maintenance_already_completed')]);
+            }
+
             // تحديث حالة الصيانة إلى مكتملة
-            $maintenance->update(['status' => 'completed']);
+            $maintenance->update([
+                'status' => 'completed',
+                'end_date' => now()
+            ]);
+
+            // تحديث حالة السيارة إلى متاحة
+            $maintenance->car->update(['status' => 'available']);
 
             // حساب تكلفة قطع الغيار (سعر الشراء للمصروفات، وسعر البيع للإيرادات)
             $partsPurchaseCost = 0; // تكلفة الشراء (للمصروفات)
@@ -220,33 +249,31 @@ class MaintenanceController extends Controller
         }
     }
 
-
     public function sparePartsProfitReport()
-{
-    $maintenanceParts = MaintenancePart::whereHas('maintenance', function ($query) {
-        $query->where('type', 'customer');
-    })->with('sparePart')->get();
+    {
+        $maintenanceParts = MaintenancePart::whereHas('maintenance', function ($query) {
+            $query->where('type', 'customer');
+        })->with('sparePart')->get();
 
-    $report = [];
-    foreach ($maintenanceParts as $part) {
-        $sparePart = $part->sparePart;
-        $quantity = $part->quantity;
-        $profitPerUnit = $sparePart->selling_price - $sparePart->purchase_price;
-        $totalProfit = $profitPerUnit * $quantity;
+        $report = [];
+        foreach ($maintenanceParts as $part) {
+            $sparePart = $part->sparePart;
+            $quantity = $part->quantity;
+            $profitPerUnit = $sparePart->selling_price - $sparePart->purchase_price;
+            $totalProfit = $profitPerUnit * $quantity;
 
-        $report[] = [
-            'spare_part_name' => $sparePart->name,
-            'quantity_used' => $quantity,
-            'purchase_price' => $sparePart->purchase_price,
-            'selling_price' => $sparePart->selling_price,
-            'profit_per_unit' => $profitPerUnit,
-            'total_profit' => $totalProfit,
-        ];
+            $report[] = [
+                'spare_part_name' => $sparePart->name,
+                'quantity_used' => $quantity,
+                'purchase_price' => $sparePart->purchase_price,
+                'selling_price' => $sparePart->selling_price,
+                'profit_per_unit' => $profitPerUnit,
+                'total_profit' => $totalProfit,
+            ];
+        }
+
+        return view('maintenance.spare_parts_profit_report', compact('report'));
     }
-
-    return view('maintenance.spare_parts_profit_report', compact('report'));
-}
-
 
     public function destroy($id)
     {
@@ -263,7 +290,7 @@ class MaintenanceController extends Controller
     public function getInvoice($id)
     {
         try {
-            $maintenance = Maintenance::with(['bike', 'customer'])->findOrFail($id);
+            $maintenance = Maintenance::with(['car', 'customer'])->findOrFail($id);
             return view('maintenance.invoice', compact('maintenance'));
         } catch (\Exception $e) {
             \Log::error('Error in MaintenanceController@getInvoice: ' . $e->getMessage());

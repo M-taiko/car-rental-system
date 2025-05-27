@@ -7,75 +7,76 @@ use Spatie\Permission\Models\Permission;
 
 class PermissionTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
         $permissions = [
-            // أذونات الدراجات
-            'view-bikes',
-            'create-bikes',
-            'edit-bikes',
-            'delete-bikes',
+            // المستخدمين والأدوار
+            'user-list',
+            'user-create',
+            'user-edit',
+            'user-delete',
+            'role-list',
+            'role-create',
+            'role-edit',
+            'role-delete',
 
-            // أذونات الإيجارات
-            'view-rentals',
-            'create-rentals',
-            'edit-rentals',
-            'delete-rentals',
-            'return-rentals', // لإرجاع الدراجة
-            'create-rental-invoice', // لإنشاء فاتورة إيجار
+            // السيارات
+            'car-list',
+            'car-create',
+            'car-edit',
+            'car-delete',
 
-            // أذونات قطع الغيار
-            'view-spare-parts',
-            'create-spare-parts',
-            'edit-spare-parts',
-            'delete-spare-parts',
+            // السائقين
+            'driver-list',
+            'driver-create',
+            'driver-edit',
+            'driver-delete',
 
-            // أذونات مبيعات قطع الغيار
-            'view-spare-part-sales',
-            'create-spare-part-sales',
-            'delete-spare-part-sales',
+            // العملاء
+            'customer-list',
+            'customer-create',
+            'customer-edit',
+            'customer-delete',
 
-            // أذونات الحسابات
-            'view-accounts',
-            'create-accounts',
-            'delete-accounts',
+            // التأجير
+            'rental-list',
+            'rental-create',
+            'rental-edit',
+            'rental-delete',
+            'rental-return',
 
-            // أذونات الصيانة
-            'view-maintenance',
-            'create-maintenance',
-            'edit-maintenance',
-            'delete-maintenance',
-            'complete-maintenance', // لإكمال الصيانة
-            'create-maintenance-invoice', // لإنشاء فاتورة صيانة
+            // الصيانة
+            'maintenance-list',
+            'maintenance-create',
+            'maintenance-edit',
+            'maintenance-delete',
+            'maintenance-complete',
 
-            // أذونات المصروفات
-            'view-expenses',
-            'create-expenses',
-            'delete-expenses',
+            // قطع الغيار
+            'spare-part-list',
+            'spare-part-create',
+            'spare-part-edit',
+            'spare-part-delete',
 
-            // أذونات المستخدمين
-            'view-users',
-            'create-users',
-            'edit-users',
-            'delete-users',
+            // المصروفات
+            'expense-list',
+            'expense-create',
+            'expense-edit',
+            'expense-delete',
 
-            // أذونات العملاء
-            'view-customers',
-            'create-customers',
-            'edit-customers',
-            'delete-customers',
+            // الحسابات
+            'account-list',
+            'account-create',
+            'account-edit',
+            'account-delete',
 
-            // أذونات التقارير
-            'view-reports', // لعرض التقارير (مثل تقرير أرباح قطع الغيار)
+            // الإعدادات
+            'setting-list',
+            'setting-edit',
         ];
 
         foreach ($permissions as $permission) {
-            Permission::updateOrCreate(['name' => $permission]);
+            Permission::create(['name' => $permission]);
         }
     }
 }

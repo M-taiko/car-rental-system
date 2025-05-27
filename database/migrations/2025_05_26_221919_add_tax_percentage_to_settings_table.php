@@ -9,20 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('rentals', function (Blueprint $table) {
-            $table->decimal('price_per_hour', 8, 2)->nullable()->after('user_id');
+        Schema::table('settings', function (Blueprint $table) {
+            $table->decimal('tax_percentage', 5, 2)->default(15.00);
         });
     }
 
     /**
      * Reverse the migrations.
      */
-    public function down()
+    public function down(): void
     {
-        Schema::table('rentals', function (Blueprint $table) {
-            $table->dropColumn('price_per_hour');
+        Schema::table('settings', function (Blueprint $table) {
+            $table->dropColumn('tax_percentage');
         });
     }
 };

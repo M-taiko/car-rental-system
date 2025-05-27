@@ -1,28 +1,126 @@
 <?php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class Rental extends Model
 {
-    protected $fillable = ['bike_id', 'customer_id', 'customer_name', 'price_per_hour', 'start_time', 'original_start_time', 'end_time', 'total_cost', 'status'];
-    // protected $casts = [
-    //     'start_time' => 'datetime',
-    //     'end_time' => 'datetime',
-    // ];
+    use HasFactory, SoftDeletes;
 
-    public function bike()
+    protected $fillable = [
+        'car_id',
+        'customer_id',
+        'driver_id',
+        'start_time',
+        'expected_end_time',
+        'actual_end_time',
+        'price_per_day',
+        'driver_price_per_day',
+        'expected_amount',
+        'actual_amount',
+        'paid_amount',
+        'refunded_amount',
+        'status',
+        'notes'
+    ];
+
+    protected $casts = [
+        'start_time' => 'datetime',
+        'expected_end_time' => 'datetime',
+        'actual_end_time' => 'datetime',
+        'price_per_day' => 'decimal:2',
+        'driver_price_per_day' => 'decimal:2',
+        'expected_amount' => 'decimal:2',
+        'actual_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'refunded_amount' => 'decimal:2'
+    ];
+
+    protected $appends = ['total_cost', 'end_time', 'duration'];
+
+    public function car()
     {
-        return $this->belongsTo(Bike::class);
+        return $this->belongsTo(Car::class);
     }
 
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
-    public function user()
+
+    public function driver()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(Driver::class);
     }
 
+    public function calculateExpectedAmount()
+    {
+        $days = $this->start_time->diffInDays($this->expected_end_time) + 1;
+        $amount = $days * $this->price_per_day;
+
+        if ($this->driver_id) {
+            $amount += $days * $this->driver_price_per_day;
+        }
+
+        return $amount;
+    }
+
+    public function calculateActualAmount()
+    {
+        if (!$this->actual_end_time) {
+            return $this->expected_amount;
+        }
+
+        $days = $this->start_time->diffInDays($this->actual_end_time) + 1;
+        $amount = $days * $this->price_per_day;
+
+        if ($this->driver_id) {
+            $amount += $days * $this->driver_price_per_day;
+        }
+
+        return $amount;
+    }
+
+    public function calculateRefundAmount()
+    {
+        if (!$this->actual_end_time || !$this->actual_amount) {
+            return 0;
+        }
+
+        $refund = $this->paid_amount - $this->actual_amount;
+        return $refund > 0 ? $refund : 0;
+    }
+
+    public function getTotalCostAttribute()
+    {
+        return $this->actual_amount ?? $this->expected_amount;
+    }
+
+    public function getEndTimeAttribute()
+    {
+        return $this->actual_end_time ?? $this->expected_end_time;
+    }
+
+    public function getDurationAttribute()
+    {
+        $endTime = $this->actual_end_time ?? $this->expected_end_time;
+        return $this->start_time->diffInDays($endTime) + 1;
+    }
+
+    public function calculateRemainingAmount()
+    {
+        return $this->total_cost - $this->paid_amount;
+    }
+
+    public function getStatusTextAttribute()
+    {
+        return [
+            'active' => __('messages.active'),
+            'completed' => __('messages.completed'),
+            'cancelled' => __('messages.cancelled')
+        ][$this->status] ?? $this->status;
+    }
 }

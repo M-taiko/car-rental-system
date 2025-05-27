@@ -13,30 +13,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // تشغيل الـ Seeders للأذونات والأدوار
         $this->call([
             PermissionTableSeeder::class,
             RoleTableSeeder::class,
+            CreateAdminUserSeeder::class,
         ]);
 
-        // التحقق من وجود دور SuperAdmin
-        $superAdminRole = Role::where('name', 'SuperAdmin')->first();
+        // التحقق من وجود دور superadmin
+        $superAdminRole = Role::where('name', 'superadmin')->first();
         if (!$superAdminRole) {
-            throw new \Exception('Role "SuperAdmin" not found. Please ensure RoleTableSeeder creates this role.');
+            throw new \Exception('Role "superadmin" not found. Please ensure RoleTableSeeder creates this role.');
         }
 
         // إنشاء مستخدم Super Admin أو تحديثه إذا كان موجودًا
         $superAdmin = User::updateOrCreate(
-            ['email' => 'donia.a5ra2019@gmail.com'],
+            ['email' => 'admin@admin.com'],
             [
-                'name' => 'Mohamed Tarek Hussain',
-                'password' => bcrypt('123456789'),
-                // أضف الحقول دي فقط لو موجودة في جدول users وفي $fillable
-                'status' => 'active',
+                'name' => 'Super Admin',
+                'password' => bcrypt('123456'),
+                'status' => 'active'
             ]
         );
 
-        // تعيين دور SuperAdmin للمستخدم
-        $superAdmin->assignRole('SuperAdmin');
+        // إسناد دور superadmin للمستخدم
+        $superAdmin->assignRole('superadmin');
     }
 }

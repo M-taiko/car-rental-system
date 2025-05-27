@@ -1,299 +1,397 @@
 @extends('layouts.master')
 
 @section('css')
-<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" rel="stylesheet">
-<style>
-    @media print {
-        body * {
-            visibility: hidden;
-        }
-        #invoiceModal .modal-content, #invoiceModal .modal-content * {
-            visibility: visible;
-        }
-        #invoiceModal {
-            position: absolute;
-            left: 0;
-            top: 0;
-        }
-    }
-</style>
-@endsection
-
-@section('title')
-    {{ __('messages.rentals') }} - {{ __('messages.BIKE_RENTAL_SYSTEM') }}
+<!-- Internal Data table css -->
+<link href="{{URL::asset('assets/plugins/datatable/css/dataTables.bootstrap4.min.css')}}" rel="stylesheet" />
+<link href="{{URL::asset('assets/plugins/datatable/css/buttons.bootstrap4.min.css')}}" rel="stylesheet">
+<link href="{{URL::asset('assets/plugins/datatable/css/responsive.bootstrap4.min.css')}}" rel="stylesheet" />
+<link href="{{URL::asset('assets/plugins/datatable/css/jquery.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{URL::asset('assets/plugins/datatable/css/responsive.dataTables.min.css')}}" rel="stylesheet">
+<link href="{{URL::asset('assets/plugins/select2/css/select2.min.css')}}" rel="stylesheet">
 @endsection
 
 @section('page-header')
+<!-- breadcrumb -->
 <div class="breadcrumb-header justify-content-between">
     <div class="my-auto">
         <div class="d-flex">
             <h4 class="content-title mb-0 my-auto">{{ __('messages.rentals') }}</h4>
-            <span class="text-muted mt-1 tx-13 mr-2 mb-0">/ {{ __('messages.manage_rentals') }}</span>
+            <span class="text-muted mt-1 tx-13 mr-2 mb-0">/ {{ __('messages.list') }}</span>
         </div>
     </div>
     <div class="d-flex my-xl-auto right-content">
-        <button class="btn btn-success" data-toggle="modal" data-target="#addRentalModal">
-            <i class="fas fa-plus"></i> {{ __('messages.add_rental') }}
-        </button>
+        <div class="mb-3 mb-xl-0">
+            <a href="{{ route('rentals.create') }}" class="btn btn-primary">
+                <i class="mdi mdi-plus"></i> {{ __('messages.new_rental') }}
+            </a>
+        </div>
     </div>
 </div>
+<!-- breadcrumb -->
 @endsection
 
 @section('content')
-
-@if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger">
-        {{ session('error') }}
-    </div>
-@endif
-
-@if($errors->any())
-    <div class="alert alert-danger">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-<div class="row">
-    <div class="col-12">
+<!-- row opened -->
+<div class="row row-sm">
+    <div class="col-xl-12">
         <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">{{ __('messages.rentals_list') }}</h3>
+            <div class="card-header pb-0">
+                <div class="d-flex justify-content-between">
+                    <h4 class="card-title mg-b-0">{{ __('messages.rentals_list') }}</h4>
+                </div>
             </div>
             <div class="card-body">
-                <table id="rentalsTable" class="table table-center table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>{{ __('messages.bike_name') }}</th>
-                            <th>{{ __('messages.user_name') }}</th>
-                            <th>{{ __('messages.price_per_hour') }}</th>
-                            <th>{{ __('messages.start_date') }}</th>
-                            <th>{{ __('messages.start_time') }}</th>
-                            <th>{{ __('messages.end_date') }}</th>
-                            <th>{{ __('messages.end_time') }}</th>
-                            <th>{{ __('messages.hours') }}</th>
-                            <th>{{ __('messages.total_cost') }}</th>
-                            <th>{{ __('messages.status') }}</th>
-                            <th>{{ __('messages.actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table text-md-nowrap" id="rentals-table">
+                        <thead>
+                            <tr>
+                                <th class="wd-5p border-bottom-0">{{ __('messages.id') }}</th>
+                                <th class="wd-15p border-bottom-0">{{ __('messages.customer') }}</th>
+                                <th class="wd-15p border-bottom-0">{{ __('messages.car') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.driver') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.start_date') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.end_date') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.duration') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.total_cost') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.paid_amount') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.remaining_amount') }}</th>
+                                <th class="wd-10p border-bottom-0">{{ __('messages.status') }}</th>
+                                <th class="wd-15p border-bottom-0">{{ __('messages.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($rentals as $rental)
+                            <tr>
+                                <td>{{ $rental->id }}</td>
+                                <td>{{ $rental->customer->name }}</td>
+                                <td>{{ $rental->car->brand }} {{ $rental->car->model }}</td>
+                                <td>{{ $rental->driver ? $rental->driver->name : __('messages.no_driver') }}</td>
+                                <td>{{ $rental->start_time->format('Y-m-d H:i') }}</td>
+                                <td>{{ $rental->end_time ? $rental->end_time->format('Y-m-d H:i') : '-' }}</td>
+                                <td>{{ $rental->duration }} {{ __('messages.days') }}</td>
+                                <td>{{ number_format($rental->total_cost, 2) }}</td>
+                                <td>{{ number_format($rental->paid_amount, 2) }}</td>
+                                <td>{{ number_format($rental->calculateRemainingAmount(), 2) }}</td>
+                                <td>
+                                    <span class="badge badge-{{ $rental->status == 'active' ? 'success' : ($rental->status == 'completed' ? 'info' : 'danger') }}">
+                                        {{ __('messages.' . $rental->status) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ route('rentals.show', $rental->id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if($rental->status == 'active')
+                                        <a href="#" class="btn btn-sm btn-success return-rental" data-id="{{ $rental->id }}">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        @endif
+                                        <a href="{{ route('rentals.invoice', ['rental' => $rental->id]) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-file-invoice"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-danger delete-rental" data-id="{{ $rental->id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
+<!-- /row -->
 
-<!-- Add Rental Modal -->
-<div class="modal fade" id="addRentalModal" tabindex="-1" role="dialog" aria-labelledby="addRentalModalLabel" aria-hidden="true">
+<!-- Return Rental Modal -->
+<div class="modal" id="return-rental-modal">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form action="{{ route('rentals.store') }}" method="POST">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addRentalModalLabel">{{ __('messages.add_rental_modal_title') }}</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="bikeId">{{ __('messages.bike') }}</label>
-                        <select name="bike_id" class="form-control" id="bikeId" required>
-                            <option value="">{{ __('messages.select_bike') }}</option>
-                            @foreach($bikes as $bike)
-                                <option value="{{ $bike->id }}">{{ $bike->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="customerId">{{ __('messages.customer') }}</label>
-                        <div class="input-group">
-                            <select name="customer_id" class="form-control" id="customerId">
-                                <option value="">{{ __('messages.select_customer') }}</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                @endforeach
-                            </select>
-                            <div class="input-group-append">
-                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCustomerModal">
-                                    <i class="fas fa-plus"></i> {{ __('messages.add_customer') }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>{{ __('messages.start_date') }}</label>
-                        <input type="text" class="form-control" value="{{ date('Y-m-d') }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="startTime">{{ __('messages.start_time') }}</label>
-                        <input type="time" name="start_time" class="form-control" id="startTime" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="pricePerHour">{{ __('messages.price_per_hour') }}</label>
-                        <input type="number" step="0.01" name="price_per_hour" class="form-control" id="pricePerHour" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Add Customer Modal -->
-<div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
+        <div class="modal-content modal-content-demo">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCustomerModalLabel">{{ __('messages.add_customer') }}</h5>
+                <h6 class="modal-title">{{ __('messages.return_rental') }}</h6>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
+                    <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label for="customerName">{{ __('messages.customer_name') }}</label>
-                    <input type="text" class="form-control" id="customerName" required>
+                <div class="rental-details mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.rental_period') }}</label>
+                                <input type="text" class="form-control" id="rental_days" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.car_daily_rate') }}</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ config('app.currency_symbol') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="car_cost" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.driver_daily_rate') }}</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ config('app.currency_symbol') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="driver_cost" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.rental_percentage') }}</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="rental_percentage" readonly>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.tax_percentage') }}</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="tax_percentage" readonly>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.tax_amount') }}</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ config('app.currency_symbol') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="tax_amount" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.base_cost') }}</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ config('app.currency_symbol') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="base_cost" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.total_amount') }}</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ config('app.currency_symbol') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="total_amount" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.paid_amount') }}</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ config('app.currency_symbol') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="paid_amount" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ __('messages.remaining_amount') }}</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ config('app.currency_symbol') }}</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="remaining_amount" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="customerPhone">{{ __('messages.customer_phone') }}</label>
-                    <input type="text" class="form-control" id="customerPhone">
-                </div>
+                <form id="returnRentalForm" method="POST">
+                    @csrf
+                    <input type="hidden" name="rental_id" id="return_rental_id">
+                    <div class="form-group">
+                        <label>{{ __('messages.return_date') }}</label>
+                        <input type="datetime-local" class="form-control" name="return_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ __('messages.notes') }}</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
-                <button type="button" class="btn btn-primary" id="saveCustomerBtn">{{ __('messages.save') }}</button>
+                <button type="submit" form="returnRentalForm" class="btn btn-primary">{{ __('messages.return') }}</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Return Bike Modal -->
-<div class="modal fade" id="returnBikeModal" tabindex="-1" role="dialog" aria-labelledby="returnBikeModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<!-- Delete Rental Modal -->
+<div class="modal" id="delete-rental-modal">
+    <div class="modal-dialog modal-sm" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="returnBikeModalLabel">{{ __('messages.return_bike') }}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
-                </button>
+                <h6 class="modal-title">{{ __('messages.delete_rental') }}</h6>
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">&times;</span></button>
             </div>
-            <form id="returnBikeForm" method="POST">
+            <form id="delete-rental-form" method="POST">
                 @csrf
+                @method('DELETE')
                 <div class="modal-body">
-                    <input type="hidden" name="rental_id" id="rentalId">
-                    <div class="form-group">
-                        <label>{{ __('messages.end_date') }}</label>
-                        <input type="text" class="form-control" value="{{ date('Y-m-d') }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="endTime">{{ __('messages.end_time') }}</label>
-                        <input type="time" name="end_time" class="form-control" id="endTime" required>
-                    </div>
+                    <p>{{ __('messages.confirm_delete_rental') }}</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('messages.close') }}</button>
-                    <button type="submit" class="btn btn-primary">{{ __('messages.confirm') }}</button>
+                <div class="modal-footer justify-content-center">
+                    <button class="btn ripple btn-danger" type="submit">{{ __('messages.delete') }}</button>
+                    <button class="btn ripple btn-secondary" data-dismiss="modal" type="button">{{ __('messages.cancel') }}</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
 @endsection
 
 @section('js')
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<!-- Internal Data tables -->
+<script src="{{URL::asset('assets/plugins/datatable/js/jquery.dataTables.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/dataTables.dataTables.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/dataTables.responsive.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/responsive.dataTables.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/jquery.dataTables.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/dataTables.bootstrap4.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/dataTables.buttons.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/buttons.bootstrap4.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/jszip.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/pdfmake.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/vfs_fonts.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/buttons.html5.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/buttons.print.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/buttons.colVis.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/dataTables.responsive.min.js')}}"></script>
+<script src="{{URL::asset('assets/plugins/datatable/js/responsive.bootstrap4.min.js')}}"></script>
+<!--Internal  Datatable js -->
+<script src="{{URL::asset('assets/js/table-data.js')}}"></script>
+
 <script>
-    $(document).ready(function () {
-        var table = $('#rentalsTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: "{{ route('rentals.data') }}",
-            columns: [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                { data: 'bike_name', name: 'bike_name' },
-                { data: 'user_name', name: 'user_name' },
-                { data: 'price_per_hour', name: 'price_per_hour' },
-                { data: 'start_date', name: 'start_date' },
-                { data: 'start_time', name: 'start_time' },
-                { data: 'end_date', name: 'end_date' },
-                { data: 'end_time', name: 'end_time' },
-                { data: 'hours', name: 'hours' },
-                { data: 'total_cost', name: 'total_cost' },
-                { data: 'status', name: 'status' },
-                { data: 'action', name: 'action', orderable: false, searchable: false }
-            ],
-            language: {
-                search: "{{ __('messages.search_rentals') }}",
-                lengthMenu: "{{ __('messages.show_entries') }}",
-                zeroRecords: "{{ __('messages.no_rentals_found') }}",
-                info: "{{ __('messages.showing_info') }}",
-                infoEmpty: "{{ __('messages.no_rentals_available') }}",
-                processing: "{{ __('messages.processing') }}",
-                paginate: {
-                    next: "{{ __('messages.next') }}",
-                    previous: "{{ __('messages.previous') }}"
-                }
-            },
-            order: [[4, 'desc']]
-        });
+$(function() {
+    // Initialize DataTable
+    $('#rentals-table').DataTable({
+        language: {
+            url: "{{ app()->getLocale() == 'ar' ? '//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json' : '//cdn.datatables.net/plug-ins/1.13.6/i18n/en.json' }}"
+        },
+        responsive: true,
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]]
+    });
 
-        // Handle Return Bike Button Click
-        $(document).on('click', '.return-bike-btn', function() {
-            var rentalId = $(this).data('id');
-            $('#rentalId').val(rentalId);
-            $('#returnBikeForm').attr('action', "{{ route('rentals.return', ':id') }}".replace(':id', rentalId));
-            $('#returnBikeModal').modal('show');
-        });
-
-        // Handle Add Customer
-        $('#saveCustomerBtn').on('click', function() {
-            var name = $('#customerName').val();
-            var phone = $('#customerPhone').val();
-
-            if (!name) {
-                alert('{{ __('messages.customer_name_required') }}');
-                return;
-            }
-
+    // Delete rental
+    $('.delete-rental').click(function() {
+        var rentalId = $(this).data('id');
+        if (confirm('{{ __('messages.are_you_sure') }}')) {
             $.ajax({
-                url: "{{ route('rentals.storeCustomer') }}",
-                method: 'POST',
+                url: '{{ route('rentals.destroy', '') }}/' + rentalId,
+                type: 'DELETE',
                 data: {
-                    _token: "{{ csrf_token() }}",
-                    name: name,
-                    phone: phone,
+                    _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
-                    if (response.success) {
-                        $('#customerId').append('<option value="' + response.customer.id + '">' + response.customer.name + '</option>');
-                        $('#customerId').val(response.customer.id);
-                        $('#addCustomerModal').modal('hide');
-                        $('#customerName').val('');
-                        $('#customerPhone').val('');
-                    }
-                },
-                error: function(xhr) {
-                    alert('Error: ' + xhr.responseJSON.message);
+                    location.reload();
                 }
             });
+        }
+    });
+
+    // Return rental
+    $('.return-rental').click(function() {
+        var rentalId = $(this).data('id');
+        var returnDate = new Date().toISOString().slice(0, 16);
+        
+        // Calculate rental details
+        $.ajax({
+            url: '{{ route('rentals.return', ['rental' => ':rental']) }}'.replace(':rental', rentalId),
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                return_date: returnDate
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Display rental details
+                    $('#rental_days').val(response.details.days);
+                    $('#car_cost').val(response.details.car_cost.toFixed(2));
+                    $('#driver_cost').val(response.details.driver_cost.toFixed(2));
+                    $('#rental_percentage').val(response.details.rental_percentage);
+                    $('#tax_percentage').val(response.details.tax_percentage);
+                    $('#tax_amount').val(response.details.tax_amount.toFixed(2));
+                    $('#base_cost').val(response.details.base_cost.toFixed(2));
+                    $('#total_amount').val(response.details.total_cost.toFixed(2));
+                    
+                    $('#return_rental_id').val(rentalId);
+                    $('#return-rental-modal').modal('show');
+                } else {
+                    alert(response.message || '{{ __("messages.error_occurred") }}');
+                }
+            }
         });
     });
+
+    // Handle return rental form submission
+    $('#returnRentalForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var rentalId = $('#return_rental_id').val();
+        var url = '{{ route('rentals.return', ['rental' => ':rental']) }}'.replace(':rental', rentalId);
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    alert(response.message);
+                    // Close modal
+                    $('#return-rental-modal').modal('hide');
+                    // Reload page to show updated status
+                    window.location.reload();
+                } else {
+                    alert(response.message || '{{ __("messages.error_occurred") }}');
+                }
+            },
+            error: function(xhr) {
+                alert('{{ __("messages.error_occurred") }}');
+            }
+        });
+    });
+
+    // Delete Rental
+    $('.delete-rental').click(function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        $('#delete-rental-form').attr('action', `/rentals/${id}`);
+        $('#delete-rental-modal').modal('show');
+    });
+});
 </script>
 @endsection

@@ -75,6 +75,7 @@
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>{{ __('messages.expense_type') }}</th>
                             <th>{{ __('messages.amount') }}</th>
                             <th>{{ __('messages.description') }}</th>
                             <th>{{ __('messages.date') }}</th>
@@ -102,6 +103,15 @@
                         </button>
                     </div>
                     <div class="modal-body">
+                        <div class="form-group">
+                            <label for="type">{{ __('messages.expense_type') }}</label>
+                            <select name="type" class="form-control" id="type" required>
+                                <option value="">{{ __('messages.select_type') }}</option>
+                                @foreach(App\Models\Expense::getTypes() as $key => $value)
+                                    <option value="{{ $key }}">{{ $value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label for="amount">{{ __('messages.amount') }}</label>
                             <input type="number" step="0.01" name="amount" class="form-control" id="amount" required>
@@ -181,45 +191,40 @@
             url: "{{ route('expenses.data') }}",
             error: function (xhr, error, thrown) {
                 if (xhr.status === 401) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Unauthorized',
-                        text: 'Please log in to view expenses.',
-                        confirmButtonText: 'Login',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = "{{ route('login') }}";
-                        }
-                    });
+                    window.location.href = "{{ route('login') }}";
                 } else {
+                    let errorMessage = 'An error occurred while fetching data';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: 'An error occurred while fetching data: ' + (xhr.responseJSON?.error || thrown),
+                        title: "{{ __('messages.error') }}",
+                        text: errorMessage
                     });
                 }
             }
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'type', name: 'type' },
             { data: 'amount', name: 'amount' },
             { data: 'description', name: 'description' },
             { data: 'date', name: 'date' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         language: {
+            processing: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><span class="sr-only">{{ __("messages.processing") }}</span>',
             search: "{{ __('messages.search_expenses') }}",
             lengthMenu: "{{ __('messages.show_entries') }}",
             zeroRecords: "{{ __('messages.no_expenses_found') }}",
             info: "{{ __('messages.showing_info') }}",
             infoEmpty: "{{ __('messages.no_expenses_available') }}",
-            processing: "{{ __('messages.processing') }}",
             paginate: {
                 next: "{{ __('messages.next') }}",
                 previous: "{{ __('messages.previous') }}"
             }
-        },
-        order: [[3, 'desc']]
+        }
     });
 
         // Edit Expense

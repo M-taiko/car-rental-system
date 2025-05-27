@@ -16,59 +16,109 @@ class ExpenseController extends Controller
 
     public function getExpensesData(Request $request)
     {
-        if (!$request->ajax()) {
-            return response()->json(['error' => 'Invalid request'], 400);
-        }
-
-        if (!auth()->check()) {
-            return response()->json(['error' => 'Unauthorized. Please log in.'], 401);
-        }
-
         try {
-            $data = Expense::select(['id', 'amount', 'description', 'date']);
+            if (!$request->ajax()) {
+                return response()->json(['error' => 'Invalid request'], 400);
+            }
+
+            if (!auth()->check()) {
+                return response()->json(['error' => 'Unauthorized. Please log in.'], 401);
+            }
+
+            $data = Account::where('type', 'expense')
+                          ->select([
+                              'id',
+                              'type',
+                              'amount',
+                              'description',
+                              'date'
+                          ]);
+
             return DataTables::of($data)
                 ->addIndexColumn()
-                ->addColumn('date', function ($row) {
+                ->editColumn('type', function ($row) {
+                    // Since we're getting data from accounts table, we need to parse the description
+                    // to get the actual expense type
+                    $description = explode(' - ', $row->description);
+                    return $description[0] ?? $row->type;
+                })
+                ->editColumn('date', function ($row) {
                     return date('Y-m-d', strtotime($row->date));
                 })
                 ->addColumn('action', function ($row) {
-                    $actionBtn = '';
-                    $actionBtn .= '<a href="' . route('expenses.show', $row->id) . '" class="btn btn-sm btn-info"><i class="fas fa-eye"></i> ' . trans('messages.show') . '</a> ';
-                    $actionBtn .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary editExpense" data-id="' . $row->id . '"><i class="fas fa-edit"></i> ' . trans('messages.edit') . '</a> ';
+                    $actions = [];
 
-                    if (auth()->user()->hasPermissionTo('delete-expenses')) {
-                        $actionBtn .= '<a href="javascript:void(0)" class="btn btn-sm btn-danger deleteExpense" data-id="' . $row->id . '"><i class="fas fa-trash"></i> ' . trans('messages.delete') . '</a>';
+                    if (auth()->user()->can('view-expenses')) {
+                        $actions[] = [
+                            'url' => route('expenses.show', $row->id),
+                            'icon' => 'fa-eye',
+                            'class' => 'btn-info',
+                            'label' => trans('messages.view')
+                        ];
                     }
-                    return $actionBtn ?: 'No Actions';
+
+                    if (auth()->user()->can('edit-expenses')) {
+                        $actions[] = [
+                            'url' => 'javascript:void(0)',
+                            'icon' => 'fa-edit',
+                            'class' => 'btn-primary editExpense',
+                            'label' => trans('messages.edit'),
+                            'data-id' => $row->id
+                        ];
+                    }
+
+                    if (auth()->user()->can('delete-expenses')) {
+                        $actions[] = [
+                            'url' => 'javascript:void(0)',
+                            'icon' => 'fa-trash',
+                            'class' => 'btn-danger deleteExpense',
+                            'label' => trans('messages.delete'),
+                            'data-id' => $row->id
+                        ];
+                    }
+
+                    $actionButtons = '';
+                    foreach ($actions as $action) {
+                        $dataId = isset($action['data-id']) ? 'data-id="' . $action['data-id'] . '"' : '';
+                        $actionButtons .= sprintf(
+                            '<a href="%s" class="btn btn-sm %s mx-1" %s><i class="fas %s"></i> %s</a>',
+                            $action['url'],
+                            $action['class'],
+                            $dataId,
+                            $action['icon'],
+                            $action['label']
+                        );
+                    }
+
+                    return $actionButtons ?: trans('messages.no_actions');
                 })
                 ->rawColumns(['action'])
+                ->escapeColumns(['description'])
                 ->make(true);
         } catch (\Exception $e) {
+            \Log::error('Error in getExpensesData: ' . $e->getMessage());
             return response()->json([
-                'error' => 'An error occurred while fetching data: ' . $e->getMessage()
+                'error' => 'An error occurred while fetching data',
+                'details' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
+
     public function store(Request $request)
     {
         $request->validate([
+            'type' => 'required|in:' . implode(',', array_keys(Expense::getTypes())),
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'date' => 'required|date',
         ]);
 
-        $expense = Expense::create([
-            'amount' => $request->amount,
-            'description' => $request->description,
-            'date' => $request->date,
-        ]);
-
+        // Create account entry directly
         Account::create([
             'type' => 'expense',
-            'amount' => $expense->amount,
-            'description' => $expense->description ?? trans('messages.general_expense'),
-            'date' => $expense->date,
-            // مش هنستخدم expense_id لأنك بتعتمد على type
+            'amount' => $request->amount,
+            'description' => Expense::getTypes()[$request->type] . ' - ' . ($request->description ?? trans('messages.general_expense')),
+            'date' => $request->date,
         ]);
 
         return redirect()->route('expenses.index')->with('success', trans('messages.expense_added_successfully'));
@@ -76,34 +126,47 @@ class ExpenseController extends Controller
 
     public function show($id)
     {
-        $expense = Expense::find($id);
-        if (!$expense) {
-            return redirect()->route('expenses.index')->with('error', trans('messages.expense_not_found'));
+        try {
+            $account = Account::where('type', 'expense')->findOrFail($id);
+            $description = explode(' - ', $account->description);
+            $expense_type = $description[0] ?? '';
+            $expense_description = $description[1] ?? '';
+
+            return view('expenses.show', compact('account', 'expense_type', 'expense_description'));
+        } catch (\Exception $e) {
+            \Log::error('Error in expense show: ' . $e->getMessage());
+            return redirect()->route('expenses.index')
+                           ->with('error', trans('messages.expense_not_found'));
         }
-        // جلب القيود بناءً على type = 'expense' ومطابقة التاريخ والمبلغ
-        $account = Account::where('type', 'expense')
-                         ->where('amount', $expense->amount)
-                         ->where('date', $expense->date)
-                         ->first();
-        return view('expenses.show', compact('expense', 'account'));
     }
 
     public function edit($id)
     {
-        $expense = Expense::find($id);
-        if (!$expense) {
+        $account = Account::where('type', 'expense')->find($id);
+        if (!$account) {
             return response()->json([
                 'success' => false,
                 'message' => trans('messages.expense_not_found'),
             ], 404);
         }
-        return response()->json($expense);
+
+        // Parse the description to get expense type and actual description
+        $description = explode(' - ', $account->description);
+        $data = [
+            'id' => $account->id,
+            'type' => array_search($description[0], Expense::getTypes()) ?: 'other',
+            'amount' => $account->amount,
+            'description' => $description[1] ?? '',
+            'date' => $account->date,
+        ];
+
+        return response()->json($data);
     }
 
     public function update(Request $request, $id)
     {
-        $expense = Expense::find($id);
-        if (!$expense) {
+        $account = Account::where('type', 'expense')->find($id);
+        if (!$account) {
             return response()->json([
                 'success' => false,
                 'message' => trans('messages.expense_not_found'),
@@ -111,31 +174,17 @@ class ExpenseController extends Controller
         }
 
         $request->validate([
+            'type' => 'required|in:' . implode(',', array_keys(Expense::getTypes())),
             'amount' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'date' => 'required|date',
         ]);
 
-        // جلب القيد القديم بناءً على type والبيانات القديمة
-        $account = Account::where('type', 'expense')
-                         ->where('amount', $expense->amount)
-                         ->where('date', $expense->date)
-                         ->first();
-
-        $expense->update([
+        $account->update([
             'amount' => $request->amount,
-            'description' => $request->description,
+            'description' => Expense::getTypes()[$request->type] . ' - ' . ($request->description ?? trans('messages.general_expense')),
             'date' => $request->date,
         ]);
-
-        // تحديث القيد
-        if ($account) {
-            $account->update([
-                'amount' => $expense->amount,
-                'description' => $expense->description ?? trans('messages.general_expense'),
-                'date' => $expense->date,
-            ]);
-        }
 
         return response()->json([
             'success' => true,
@@ -145,21 +194,15 @@ class ExpenseController extends Controller
 
     public function destroy($id)
     {
-        $expense = Expense::find($id);
-        if (!$expense) {
+        $account = Account::where('type', 'expense')->find($id);
+        if (!$account) {
             return response()->json([
                 'success' => false,
                 'message' => trans('messages.expense_not_found'),
             ], 404);
         }
 
-        // حذف القيد بناءً على type والبيانات
-        Account::where('type', 'expense')
-               ->where('amount', $expense->amount)
-               ->where('date', $expense->date)
-               ->delete();
-
-        $expense->delete();
+        $account->delete();
 
         return response()->json([
             'success' => true,

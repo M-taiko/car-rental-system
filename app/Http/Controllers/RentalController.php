@@ -1,311 +1,317 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Rental;
-use App\Models\Bike;
+use App\Models\Car;
 use App\Models\Customer;
+use App\Models\Driver;
 use App\Models\Account;
-use App\Models\Maintenance;
-use App\Models\Expense;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class RentalController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:rental-list')->only(['index', 'show']);
+        $this->middleware('permission:rental-create')->only(['create', 'store']);
+        $this->middleware('permission:rental-edit')->only(['edit', 'update']);
+        $this->middleware('permission:rental-delete')->only(['destroy']);
+        $this->middleware('permission:rental-return')->only(['returnCar']);
+    }
+
     public function index()
     {
-        $bikes = Bike::where('status', 'available')->get();
+        $rentals = Rental::with(['car', 'customer'])->latest()->paginate(10);
+        return view('rentals.index', compact('rentals'));
+    }
+
+    public function create()
+    {
+        $cars = Car::where('status', 'available')->get();
+        $drivers = Driver::where('status', 'available')->get();
         $customers = Customer::all();
-        return view('rentals.index', compact('bikes', 'customers'));
-    }
 
-    public function getRentalsData(Request $request)
-    {
-        if ($request->ajax()) {
-            $data = Rental::with('bike', 'customer')->select(['id', 'bike_id', 'customer_id', 'customer_name', 'price_per_hour', 'start_time', 'original_start_time', 'end_time', 'total_cost', 'status']);
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('bike_name', function ($row) {
-                    return $row->bike->name;
-                })
-                ->addColumn('user_name', function ($row) {
-                    return $row->customer_name ?? ($row->customer ? $row->customer->name : '-');
-                })
-                ->addColumn('start_date', function ($row) {
-                    return $row->original_start_time ? date('Y-m-d', strtotime($row->original_start_time)) : '-';
-                })
-                ->addColumn('start_time', function ($row) {
-                    return $row->original_start_time ? date('h:i:s A', strtotime($row->original_start_time)) : '-';
-                })
-                ->addColumn('end_date', function ($row) {
-                    return $row->end_time ? date('Y-m-d', strtotime($row->end_time)) : '-';
-                })
-                ->addColumn('end_time', function ($row) {
-                    return $row->end_time ? date('h:i:s A', strtotime($row->end_time)) : '-';
-                })
-                ->addColumn('hours', function ($row) {
-                    if ($row->original_start_time && $row->end_time) {
-                        $start = strtotime($row->original_start_time);
-                        $end = strtotime($row->end_time);
-                        $hours = round(($end - $start) / 3600);
-                        return $hours;
-                    }
-                    return '-';
-                })
-                ->addColumn('action', function ($row) {
-                    $returnBtn = $row->status == 'ongoing' && !$row->end_time ?
-                        '<button class="btn btn-warning btn-sm return-bike-btn" data-id="'.$row->id.'"><i class="fas fa-undo"></i> '.trans('messages.return_bike').'</button>' : '';
-                    $calculateBtn = $row->status == 'ongoing' && $row->end_time ?
-                        '<form action="'.route('rentals.calculateCost', $row->id).'" method="POST" style="display:inline-block;">'
-                        .csrf_field()
-                        .'<button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-calculator"></i> '.trans('messages.calculate_cost').'</button>'
-                        .'</form>' : '';
-                    $viewInvoiceBtn = $row->status == 'completed' ?
-                        '<a href="'.route('rentals.getInvoice', $row->id).'" class="btn btn-info btn-sm"><i class="fas fa-file-invoice"></i> '.trans('messages.view_invoice').'</a>' : '';
-                    $deleteBtn = '<form action="'.route('rentals.destroy', $row->id).'" method="POST" style="display:inline-block;">'
-                                .csrf_field().method_field('DELETE')
-                                .'<button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> '.trans('messages.delete').'</button>'
-                                .'</form>';
-                    return $returnBtn . ' ' . $calculateBtn . ' ' . $viewInvoiceBtn . ' ' . $deleteBtn;
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-    }
-
-    public function storeCustomer(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
-        ]);
-
-        $customer = Customer::create([
-            'name' => $request->name,
-            'phone' => $request->phone,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'customer' => $customer,
-        ]);
+        return view('rentals.create', compact('cars', 'drivers', 'customers'));
     }
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'car_id' => 'required|exists:cars,id',
+            'customer_id' => 'required|exists:customers,id',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'start_time' => 'required|date',
+            'expected_end_time' => 'required|date|after:start_time',
+            'price_per_day' => 'required|numeric|min:0',
+            'driver_price_per_day' => 'required_with:driver_id|nullable|numeric|min:0',
+            'paid_amount' => 'required|numeric|min:0',
+            'notes' => 'nullable|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $rental = new Rental($validated);
+            $rental->status = 'active';
+            $rental->expected_amount = $rental->calculateExpectedAmount();
+            $rental->save();
+
+            Car::where('id', $rental->car_id)->update(['status' => 'rented']);
+
+            if ($rental->driver_id) {
+                Driver::where('id', $rental->driver_id)->update(['status' => 'assigned']);
+            }
+
+            if ($rental->paid_amount > 0) {
+                Account::create([
+                    'type' => 'income',
+                    'amount' => $rental->paid_amount,
+                    'description' => __('messages.rental_payment') . ' - ' . __('messages.rental_id') . ': ' . $rental->id,
+                    'date' => now()
+                ]);
+            }
+
+            DB::commit();
+
+            return $request->ajax()
+                ? response()->json(['success' => true, 'message' => __('messages.rental_created'), 'redirect' => route('rentals.index')])
+                : redirect()->route('rentals.index')->with('success', __('messages.rental_created'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Rental creation failed: ' . $e->getMessage());
+
+            return $request->ajax()
+                ? response()->json(['success' => false, 'message' => __('messages.rental_create_failed')], 422)
+                : redirect()->route('rentals.create')->with('error', __('messages.rental_create_failed'));
+        }
+    }
+
+    public function show(Rental $rental)
+    {
+        return view('rentals.show', compact('rental'));
+    }
+
+    public function edit(Rental $rental)
+    {
+        $cars = Car::where('status', 'available')
+            ->orWhere('id', $rental->car_id)
+            ->get();
+        $customers = Customer::all();
+
+        return view('rentals.edit', compact('rental', 'cars', 'customers'));
+    }
+
+    public function update(Request $request, Rental $rental)
+    {
         $request->validate([
-            'bike_id' => 'required|exists:bikes,id',
-            'customer_id' => 'nullable|exists:customers,id',
+            'car_id' => 'required|exists:cars,id',
+            'customer_id' => 'required|exists:customers,id',
             'price_per_hour' => 'required|numeric|min:0',
-            'start_time' => 'required',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'rental_type' => 'required|in:daily,weekly,monthly',
+            'notes' => 'nullable|string'
         ]);
 
-        $bike = Bike::findOrFail($request->bike_id);
-        if ($bike->status == 'rented') {
-            return redirect()->route('rentals.index')->with('error', trans('messages.bike_already_rented'));
+        if ($rental->car_id != $request->car_id) {
+            $rental->car->update(['status' => 'available']);
+            Car::findOrFail($request->car_id)->update(['status' => 'rented']);
         }
 
-        $customerName = null;
-        $customerId = $request->customer_id;
-        if ($customerId) {
-            $customer = Customer::find($customerId);
-            $customerName = $customer->name;
-        } else {
-            $customerName = trans('messages.cash_customer');
-            $customerId = null;
-        }
+        $rental->update($request->all());
 
-        $startTime = date('Y-m-d H:i:s', strtotime(date('Y-m-d') . ' ' . $request->start_time));
-
-        Rental::create([
-            'bike_id' => $request->bike_id,
-            'customer_id' => $customerId,
-            'customer_name' => $customerName,
-            'price_per_hour' => $request->price_per_hour,
-            'start_time' => $startTime,
-            'original_start_time' => $startTime, // احفظ نسخة ثابتة
-            'status' => 'ongoing',
-        ]);
-
-        $bike->update(['status' => 'rented']);
-        return redirect()->route('rentals.index')->with('success', trans('messages.rental_added_successfully'));
+        return redirect()->route('rentals.index')->with('success', 'Rental updated successfully');
     }
 
-
-    public function returnBike(Request $request, $id)
+    public function returnCar(Request $request, Rental $rental)
     {
-        $rental = Rental::findOrFail($id);
-        if ($rental->status == 'completed') {
-            return redirect()->route('rentals.index')->with('error', trans('messages.rental_already_completed'));
-        }
-
-        if ($rental->end_time) {
-            return redirect()->route('rentals.index')->with('error', trans('messages.bike_already_returned'));
-        }
-
         $request->validate([
-            'end_time' => 'required',
+            'end_time' => 'required|date',
+            'additional_payment' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string'
         ]);
 
-        \Log::info('Start Time Before Return: ' . $rental->start_time);
+        try {
+            DB::beginTransaction();
 
-        $endTime = date('Y-m-d H:i:s', strtotime(date('Y-m-d') . ' ' . $request->end_time));
-        $rental->end_time = $endTime;
+            if ($rental->status !== 'active') {
+                throw new \Exception(__('messages.rental_already_completed'));
+            }
 
-        // تأكد إن start_time ما بيتغيرش
-        $rental->save(['timestamps' => false]); // تعطيل الـ timestamps التلقائية
+            $rental->actual_end_time = Carbon::parse($request->end_time);
+            $rental->actual_amount = $rental->calculateActualAmount();
 
-        $rental = $rental->fresh();
-        \Log::info('Start Time After Return: ' . $rental->start_time);
+            if ($request->filled('additional_payment') && $request->additional_payment > 0) {
+                $rental->paid_amount += $request->additional_payment;
 
-        return redirect()->route('rentals.index')->with('success', trans('messages.bike_returned_successfully'));
+                Account::create([
+                    'type' => 'income',
+                    'amount' => $request->additional_payment,
+                    'description' => __('messages.rental_additional_payment') . ' - ID: ' . $rental->id,
+                    'date' => now()
+                ]);
+            }
+
+            $details = $this->calculateRentalDetails($rental, $request->end_time);
+
+            $rental->update([
+                'end_time' => $request->end_time,
+                'notes' => $request->notes,
+                'status' => 'completed',
+                'total_cost' => $details['total_cost'],
+                'tax_amount' => $details['tax_amount']
+            ]);
+
+            $rental->car->update(['status' => 'available']);
+
+            if ($rental->driver) {
+                $rental->driver->update(['status' => 'available']);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.rental_returned_successfully'),
+                'details' => $details
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error returning rental: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
-    public function calculateCost(Request $request, $id)
+    private function calculateRentalDetails($rental, $returnDate)
     {
-        $rental = Rental::findOrFail($id);
-        if ($rental->status == 'completed') {
-            return redirect()->route('rentals.index')->with('error', trans('messages.rentalAlreadyCompleted'));
+        $settings = \App\Models\Setting::first();
+        $taxPercentage = $settings->tax_percentage ?? 15.0;
+
+        $start = Carbon::parse($rental->start_time);
+        $end = Carbon::parse($returnDate);
+        $days = $start->diffInDays($end) + 1;
+
+        $carCost = $rental->car->daily_rate * $days;
+        $driverCost = $rental->driver ? $rental->driver->daily_rate * $days : 0;
+        $base = $carCost + $driverCost;
+
+        $percentage = $rental->car->rental_percentage ?? 0;
+        $baseWithPerc = $base + ($base * ($percentage / 100));
+        $taxAmount = $baseWithPerc * ($taxPercentage / 100);
+        $totalCost = $baseWithPerc + $taxAmount;
+
+        return [
+            'days' => $days,
+            'car_cost' => $carCost,
+            'driver_cost' => $driverCost,
+            'rental_percentage' => $percentage,
+            'base_cost' => $base,
+            'tax_percentage' => $taxPercentage,
+            'tax_amount' => $taxAmount,
+            'total_cost' => $totalCost
+        ];
+    }
+
+    public function destroy(Rental $rental)
+    {
+        try {
+            DB::beginTransaction();
+
+            $rental->car->update(['status' => 'available']);
+
+            if ($rental->driver_id) {
+                $rental->driver->update(['status' => 'available']);
+            }
+
+            $rental->delete();
+
+            DB::commit();
+
+            return redirect()->route('rentals.index')->with('success', __('messages.rental_deleted'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('rentals.index')->with('error', __('messages.rental_delete_failed'));
         }
+    }
 
-        if (!$rental->end_time) {
-            return redirect()->route('rentals.index')->with('error', trans('messages.bike_not_returned_yet'));
-        }
+    public function invoice(Rental $rental)
+    {
+        return $this->getInvoice($rental);
+    }
 
-        $startTime = $rental->original_start_time; // لو استخدمنا original_start_time، استبدلها هنا
-        $endTime = $rental->end_time;
+    public function getInvoice(Rental $rental)
+    {
+        $rental->load(['car', 'customer', 'driver']);
 
-        $startTimestamp = strtotime($startTime);
-        $endTimestamp = strtotime($endTime);
-        $hours = round(($endTimestamp - $startTimestamp) / 3600);
+        $total = $rental->actual_amount ?? $rental->expected_amount;
+        $remaining = $rental->calculateRemainingAmount();
 
-        $rental->total_cost = $hours * $rental->price_per_hour;
-        $rental->status = 'completed';
-        $rental->save();
+        return view('rentals.invoice', compact('rental', 'total', 'remaining'));
+    }
 
-        $bike = Bike::find($rental->bike_id);
-        $bike->update(['status' => 'available']);
+    public function getRentalsData()
+    {
+        $rentals = Rental::with(['car', 'customer', 'driver'])->get();
 
-        // تسجيل الدخل في الخزينة
-        Account::create([
-            'type' => 'income',
-            'amount' => $rental->total_cost,
-            'description' => trans('messages.rental_invoice_description', ['id' => $rental->id, 'user' => $rental->customer_name ?? ($rental->customer ? $rental->customer->name : '-')]),
-            'date' => date('Y-m-d H:i:s'),
+        return DataTables::of($rentals)
+            ->addColumn('car', fn($r) => $r->car->brand . ' ' . $r->car->model)
+            ->addColumn('customer', fn($r) => $r->customer->name)
+            ->addColumn('driver', fn($r) => $r->driver ? $r->driver->name : '-')
+            ->addColumn('start_time', fn($r) => $r->start_time->format('Y-m-d H:i'))
+            ->addColumn('end_time', fn($r) => $r->end_time ? $r->end_time->format('Y-m-d H:i') : '-')
+            ->addColumn('total_cost', fn($r) => number_format($r->total_cost, 2))
+            ->addColumn('status', fn($r) => $r->status_text)
+            ->addColumn('action', function ($r) {
+                $buttons = '';
+                if ($r->status === 'active' && auth()->user()->can('rental-return')) {
+                    $buttons .= '<button class="btn btn-sm btn-success return-rental mx-1" data-id="' . $r->id . '"><i class="fas fa-undo"></i> ' . __('messages.return_car') . '</button>';
+                }
+                if (auth()->user()->can('rental-edit')) {
+                    $buttons .= '<a href="' . route('rentals.edit', $r->id) . '" class="btn btn-sm btn-info mx-1"><i class="fas fa-edit"></i> ' . __('messages.edit') . '</a>';
+                }
+                if (auth()->user()->can('rental-delete')) {
+                    $buttons .= '<button class="btn btn-sm btn-danger delete-rental mx-1" data-id="' . $r->id . '"><i class="fas fa-trash"></i> ' . __('messages.delete') . '</button>';
+                }
+                return $buttons;
+            })
+            ->rawColumns(['action'])
+            ->make(true);
+    }
+
+    public function storeCustomer(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:customers',
+            'email' => 'nullable|email|max:255|unique:customers',
+            'address' => 'nullable|string',
+            'id_number' => 'required|string|max:20|unique:customers',
+            'id_type' => 'required|in:national_id,iqama,passport'
         ]);
 
-        $invoice = [
-            'rental_id' => $rental->id,
-            'bike_name' => $rental->bike->name,
-            'user_name' => $rental->customer_name ?? ($rental->customer ? $rental->customer->name : '-'),
-            'start_time' => date('Y-m-d h:i:s A', strtotime($rental->start_time)),
-            'end_time' => date('Y-m-d h:i:s A', strtotime($rental->end_time)),
-            'hours' => $hours,
-            'price_per_hour' => $rental->price_per_hour,
-            'total_cost' => $rental->total_cost,
-        ];
+        try {
+            $customer = Customer::create($validated);
 
-        return redirect()->route('rentals.showInvoice', $rental->id)->with('invoice', $invoice);
-    }
-
-    public function getInvoice($id)
-    {
-        $rental = Rental::findOrFail($id);
-        if ($rental->status != 'completed') {
-            return redirect()->route('rentals.index')->with('error', trans('messages.rental_not_completed'));
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.customer_created'),
+                'customer' => $customer
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.customer_create_failed')
+            ], 422);
         }
-
-        $startTimestamp = strtotime($rental->original_start_time);
-        $endTimestamp = strtotime($rental->end_time);
-        $hours = round(($endTimestamp - $startTimestamp) / 3600);
-
-        $invoice = [
-            'rental_id' => $rental->id,
-            'bike_name' => $rental->bike->name,
-            'user_name' => $rental->customer_name ?? ($rental->customer ? $rental->customer->name : '-'),
-            'start_time' => date('Y-m-d h:i:s A', strtotime($rental->original_start_time)),
-            'end_time' => date('Y-m-d h:i:s A', strtotime($rental->end_time)),
-            'hours' => $hours,
-            'price_per_hour' => $rental->price_per_hour,
-            'total_cost' => $rental->total_cost,
-        ];
-
-        return redirect()->route('rentals.showInvoice', $rental->id)->with('invoice', $invoice);
-    }
-
-    public function showInvoice($id)
-    {
-        $invoice = session('invoice');
-        if (!$invoice) {
-            return redirect()->route('rentals.index')->with('error', trans('messages.invoice_not_found'));
-        }
-
-        return view('rentals.invoice', compact('invoice'));
-    }
-
-
-    public function getNotifications()
-    {
-        $notifications = [];
-
-        // إشعارات الإيجارات الجديدة
-        $newRentals = Rental::where('status', 'ongoing')
-                            ->where('created_at', '>=', now()->subDays(1))
-                            ->with('bike') // التأكد من تحميل العلاقة
-                            ->get();
-        foreach ($newRentals as $rental) {
-            $bikeName = $rental->bike ? $rental->bike->name : 'Unknown Bike'; // التحقق من وجود الدراجة
-            $notifications[] = [
-                'message' => trans('messages.new_rental_notification', ['id' => $rental->id, 'bike' => $bikeName]),
-                'time' => $rental->created_at->diffForHumans(),
-                'icon' => 'fas fa-bicycle',
-                'color' => 'primary',
-            ];
-        }
-
-        // إشعارات الصيانة المكتملة
-        $completedMaintenance = Maintenance::where('status', 'completed')
-                                          ->where('updated_at', '>=', now()->subDays(1))
-                                          ->with('bike') // التأكد من تحميل العلاقة
-                                          ->get();
-        foreach ($completedMaintenance as $maintenance) {
-            $bikeName = $maintenance->bike ? $maintenance->bike->name : 'Unknown Bike'; // التحقق من وجود الدراجة
-            $notifications[] = [
-                'message' => trans('messages.maintenance_completed_notification', ['id' => $maintenance->id, 'bike' => $bikeName]),
-                'time' => $maintenance->updated_at->diffForHumans(),
-                'icon' => 'fas fa-tools',
-                'color' => 'success',
-            ];
-        }
-
-        // إشعارات المصروفات الجديدة
-        $newExpenses = Expense::where('created_at', '>=', now()->subDays(1))
-                              ->get();
-        foreach ($newExpenses as $expense) {
-            $notifications[] = [
-                'message' => trans('messages.new_expense_notification', ['amount' => $expense->amount]),
-                'time' => $expense->created_at->diffForHumans(),
-                'icon' => 'fas fa-money-bill-wave',
-                'color' => 'danger',
-            ];
-        }
-
-        // ترتيب الإشعارات حسب الوقت (الأحدث أولاً)
-        usort($notifications, function ($a, $b) {
-            return strtotime($b['time']) - strtotime($a['time']);
-        });
-
-        return $notifications;
-    }
-
-    public function destroy($id)
-    {
-        $rental = Rental::findOrFail($id);
-        $bike = Bike::find($rental->bike_id);
-        if ($rental->status == 'ongoing') {
-            $bike->update(['status' => 'available']);
-        }
-        $rental->delete();
-        return redirect()->route('rentals.index')->with('success', trans('messages.rental_deleted_successfully'));
     }
 }

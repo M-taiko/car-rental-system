@@ -15,73 +15,76 @@ class RoleTableSeeder extends Seeder
      */
     public function run()
     {
-        // إنشاء الأدوار
-        $superAdmin = Role::updateOrCreate(['name' => 'superadmin']);
-        $admin = Role::updateOrCreate(['name' => 'admin']);
-        $accountant = Role::updateOrCreate(['name' => 'accountant']);
-        $salesperson = Role::updateOrCreate(['name' => 'salesperson']);
-        $technician = Role::updateOrCreate(['name' => 'technician']);
-        $rentalAgent = Role::updateOrCreate(['name' => 'rental-agent']);
+        // Reset cached roles and permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // تحديد الأذونات لكل دور
-
-        // Super Admin: ليه صلاحية على كل حاجة
-        $superAdminPermissions = Permission::all()->pluck('name')->toArray();
-        $superAdmin->syncPermissions($superAdminPermissions);
-
-        // Admin: ليه صلاحية على كل حاجة ما عدا حذف المستخدمين والحسابات
-        $adminPermissions = array_diff($superAdminPermissions, ['delete-users', 'delete-accounts']);
-        $admin->syncPermissions($adminPermissions);
-
-        // Accountant (محاسب): بيتعامل مع الحسابات والمصروفات والتقارير
-        $accountantPermissions = [
-            'view-accounts',
-            'create-accounts',
-            'delete-accounts',
-            'view-expenses',
-            'create-expenses',
-            'delete-expenses',
-            'view-reports',
-            'create-rental-invoice',
-            'create-maintenance-invoice',
+        // Create basic roles if they don't exist
+        $roles = [
+            'superadmin',
+            'admin',
+            'accountant',
+            'salesperson',
+            'technician',
+            'rental-agent'
         ];
-        $accountant->syncPermissions($accountantPermissions);
 
-        // Salesperson (بياع): بيتعامل مع مبيعات قطع الغيار
-        $salespersonPermissions = [
-            'view-spare-parts',
-            'view-spare-part-sales',
-            'create-spare-part-sales',
-            'delete-spare-part-sales',
-        ];
-        $salesperson->syncPermissions($salespersonPermissions);
+        foreach ($roles as $role) {
+            Role::firstOrCreate(['name' => $role]);
+        }
 
-        // Technician (فني تصليحات): بيتعامل مع الصيانة
-        $technicianPermissions = [
-            'view-maintenance',
-            'create-maintenance',
-            'edit-maintenance',
-            'delete-maintenance',
-            'complete-maintenance',
-            'create-maintenance-invoice',
-            'view-spare-parts', // عشان يقدر يستخدم قطع الغيار في الصيانة
-        ];
-        $technician->syncPermissions($technicianPermissions);
+        // Update permissions for existing roles
+        $superadmin = Role::where('name', 'superadmin')->first();
+        if ($superadmin) {
+            $superadmin->syncPermissions(Permission::all());
+        }
 
-        // Rental Agent (الشخص اللي بيأجر الدراجات): بيتعامل مع الإيجارات والعملاء
-        $rentalAgentPermissions = [
-            'view-rentals',
-            'create-rentals',
-            'edit-rentals',
-            'delete-rentals',
-            'return-rentals',
-            'create-rental-invoice',
-            'view-customers',
-            'create-customers',
-            'edit-customers',
-            'delete-customers',
-            'view-bikes',
-        ];
-        $rentalAgent->syncPermissions($rentalAgentPermissions);
+        $admin = Role::where('name', 'admin')->first();
+        if ($admin) {
+            $admin->syncPermissions([
+                'driver-list', 'driver-create', 'driver-edit', 'driver-delete',
+                'user-list', 'user-create', 'user-edit',
+                'car-list', 'car-create', 'car-edit',
+                'rental-list', 'rental-create', 'rental-edit', 'rental-return',
+                'customer-list', 'customer-create', 'customer-edit',
+                'account-list', 'account-create', 'account-edit',
+                'maintenance-list', 'maintenance-create', 'maintenance-complete'
+            ]);
+        }
+
+        $accountant = Role::where('name', 'accountant')->first();
+        if ($accountant) {
+            $accountant->syncPermissions([
+                'account-list', 'account-create', 'account-edit',
+                'rental-list', 'customer-list'
+            ]);
+        }
+
+        $salesperson = Role::where('name', 'salesperson')->first();
+        if ($salesperson) {
+            $salesperson->syncPermissions([
+                'car-list',
+                'rental-list', 'rental-create',
+                'customer-list', 'customer-create',
+                'account-create'
+            ]);
+        }
+
+        $technician = Role::where('name', 'technician')->first();
+        if ($technician) {
+            $technician->syncPermissions([
+                'maintenance-list', 'maintenance-create', 'maintenance-complete',
+                'car-list'
+            ]);
+        }
+
+        $rentalAgent = Role::where('name', 'rental-agent')->first();
+        if ($rentalAgent) {
+            $rentalAgent->syncPermissions([
+                'rental-list', 'rental-create', 'rental-return',
+                'customer-list', 'customer-create',
+                'car-list',
+                'account-create'
+            ]);
+        }
     }
 }

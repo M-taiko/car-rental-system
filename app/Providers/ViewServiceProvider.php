@@ -10,11 +10,7 @@ class ViewServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        View::composer('*', function ($view) {
-            $rentalController = app(RentalController::class);
-            $notifications = $rentalController->getNotifications();
-            $view->with('notifications', $notifications);
-        });
+        // No view composers needed
     }
 
     public function register()

@@ -24,6 +24,7 @@ class SettingController extends Controller
 
     public function update(Request $request)
     {
+    
         try {
             $validated = $request->validate([
                 'company_name' => 'required|string|max:255',
@@ -53,13 +54,16 @@ class SettingController extends Controller
                 }
 
                 // Store new logo in settings directory
-                $path = 'settings/' . time() . '_' . $request->file('company_logo')->getClientOriginalName();
-                $request->file('company_logo')->storeAs('public', $path);
-
+                $filename = time() . '_' . $request->file('company_logo')->getClientOriginalName();
+                $path = 'settings/' . $filename;
+                
+                // Store file and get the full path
+                $request->file('company_logo')->storeAs('public/settings', $filename);
+                
                 // Save logo path in database
                 Setting::updateOrCreate(
                     ['key' => 'company_logo'],
-                    ['value' => $path]
+                    ['value' => $filename]
                 );
             }
 

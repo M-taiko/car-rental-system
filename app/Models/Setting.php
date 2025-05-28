@@ -48,8 +48,12 @@ class Setting extends Model
             case 'number':
                 return (float) $value;
             case 'json':
-            }
+                return json_decode($value, true);
+            default:
+                return $value;
+        }
     }
+    
 
     public function setValueAttribute($value)
     {

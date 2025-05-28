@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Setting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // إضافة الإعدادات إلى جميع العروض
+        view()->composer('*', function ($view) {
+            $settings = Setting::pluck('value', 'key')->toArray();
+            $view->with('settings', $settings);
+        });
     }
 }

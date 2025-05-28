@@ -1,8 +1,6 @@
 @extends('layouts.master')
 
-@php
-    use App\Models\Setting;
-@endphp
+
 
 @section('css')
 <style>
@@ -151,15 +149,13 @@
             <tr>
                 <td style="width: 50%;">
                     @php
+                        use App\Models\Setting; 
                         $logo = Setting::get('company_logo');
                     @endphp
-                    @if($logo)
-                    <img src="{{ Storage::url($logo) }}" alt="{{ config('settings.company.name') }}" class="company-logo">
-                    @else
-                    <img src="{{ asset('assets/img/brand/logo.png') }}" alt="{{ config('settings.company.name') }}" class="company-logo">
-                    @endif
+                    
+                    <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px;"   alt="Company Logo" class="logo-1">
+
                     <div class="company-info">
-                        <h3>{{ config('settings.company.name') }}</h3>
                         <p>{{ config('settings.company.address') }}</p>
                         <p>{{ __('messages.phone') }}: {{ config('settings.company.phone') }}</p>
                         <p>{{ __('messages.email') }}: {{ config('settings.company.email') }}</p>

@@ -4,11 +4,8 @@
 					<div class="main-header-left ">
 						<div class="responsive-logo">
 						<a href="{{ url('/') }}">
-							<img src="{{ isset($settings['logo']) ? asset('storage/settings/' . $settings['company_logo']) : asset('assets/img/brand/logo.png') }}" alt="Company Logo" class="logo-1">
-							<img src="{{ isset($settings['logo']) ? asset('storage/settings/' . $settings['company_logo']) : asset('assets/img/brand/logo-white.png') }}" alt="Company Logo" class="dark-logo-1">
-							<img src="{{ isset($settings['logo']) ? asset('storage/settings/' . $settings['company_logo']) : asset('assets/img/brand/logo.png') }}" alt="Company Logo" class="logo-2">
-							<img src="{{ isset($settings['logo']) ? asset('storage/settings/' . $settings['company_logo']) : asset('assets/img/brand/logo-white.png') }}" alt="Company Logo" class="dark-logo-2">
-						</a>
+							<img src="{{ isset($settings['company_logo']) ? asset('storage/settings/' . $settings['company_logo']) : asset('assets/img/brand/logo.png') }}" alt="Company Logo" class="logo-1">
+							</a>
 					</div>
 						<div class="app-sidebar__toggle" data-toggle="sidebar">
 							<a class="open-toggle" href="#"><i class="header-icon fe fe-align-left" ></i></a>
@@ -237,7 +234,7 @@
 							</div> -->
 							<div class="dropdown main-profile-menu nav nav-item nav-link">
 								<a class="profile-user d-flex" href="{{ route('profile.index') }}">
-									<img alt="{{ Auth::user()->name }}" src="{{ URL::asset('storage/app/public/' . Auth::user()->profile_photo_path) }}" class="rounded-circle">
+									<img alt="{{ Auth::user()->name }}" src="{{ Auth::user()->profile_photo_path ? asset('storage/profile-photos/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
 								</a>
 								<div class="dropdown-menu">
 									<div class="main-header-profile bg-primary p-3">
@@ -259,7 +256,7 @@
 							</div>
 							<!-- <div class="dropdown main-header-message right-toggle">
 								<a class="nav-link pr-0" data-toggle="sidebar-left" data-target=".sidebar-left">
-									<svg xmlns="http://www.w3.org/2000/svg" class="header-icon-svgs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+									<svg xmlns="http://www.w3.org/2000/svg" class="/storage/profile-photos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
 								</a>
 							</div> -->
 						</div>

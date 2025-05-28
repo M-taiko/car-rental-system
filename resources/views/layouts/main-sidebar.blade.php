@@ -9,23 +9,24 @@
             @php
                 $logo = Setting::get('company_logo');
             @endphp
-            <img src="{{ $logo ? Storage::url($logo) : asset('assets/img/brand/logo.png') }}" class="main-logo" style="max-width: 188px; max-height: 68px; object-fit: contain;" alt="{{ config('settings.company.name') }}">
-        </a>
+
+            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px; margin-top: -20px;" alt="Company Logo" class="logo-1">
+            </a>
         <a class="desktop-logo logo-dark active" href="{{ route('dashboard') }}">
-            <img src="{{ $logo ? Storage::url($logo) : asset('assets/img/brand/logo-white.png') }}" class="main-logo dark-theme" style="max-width: 188px; max-height: 68px; object-fit: contain;" alt="{{ config('settings.company.name') }}">
+            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo-white.png') }}" alt="Company Logo" class="logo-1">
         </a>
         <a class="logo-icon mobile-logo icon-light active" href="{{ route('dashboard') }}">
-            <img src="{{ $logo ? Storage::url($logo) : asset('assets/img/brand/favicon.png') }}" class="logo-icon" style="max-width: 35px; max-height: 35px; object-fit: contain;" alt="{{ config('settings.company.name') }}">
+            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/favicon.png') }}" alt="Company Logo" class="logo-1">
         </a>
         <a class="logo-icon mobile-logo icon-dark active" href="{{ route('dashboard') }}">
-            <img src="{{ $logo ? Storage::url($logo) : asset('assets/img/brand/favicon-white.png') }}" class="logo-icon dark-theme" style="max-width: 35px; max-height: 35px; object-fit: contain;" alt="{{ config('settings.company.name') }}">
+            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/favicon-white.png') }}" alt="Company Logo" class="logo-1">
         </a>
     </div>
     <div class="main-sidemenu">
         <div class="app-sidebar__user clearfix">
             <div class="dropdown user-pro-body">
                 <div class="">
-                    <img alt="{{ Auth::user()->name }}" class="avatar avatar-xl brround rounded-circle" src="{{ asset('storage/app/public/' . Auth::user()->profile_photo_path) }}">
+                    <img alt="{{ Auth::user()->name }}" class="avatar avatar-xl brround rounded-circle" src="{{ Auth::user()->profile_photo_path ? asset('storage/profile-photos/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" style="width: 60px; height: 60px; object-fit: cover;">
                     <span class="avatar-status profile-status bg-green"></span>
                 </div>
                 <div class="user-info">
@@ -52,6 +53,8 @@
                     <span class="side-menu__label">{{ __('messages.dashboard') }}</span>
                 </a>
             </li>
+
+         
 
             <!-- Car Rental Management -->
             <li class="side-item side-item-category">{{ __('messages.vehicle_management') }}</li>
@@ -136,7 +139,16 @@
             <li class="side-item side-item-category">{{ __('messages.system_settings') }}</li>
 
             <!-- Users and Roles -->
-            @role('super-admin')
+          
+            <!-- System Settings -->
+            <li class="slide">
+                <a class="side-menu__item" href="{{ route('settings.index') }}">
+                    <i class="side-menu__icon fas fa-cog"></i>
+                    <span class="side-menu__label">{{ __('messages.system_settings') }}</span>
+                </a>
+            </li>
+            @role('superadmin')
+            
             <li class="slide">
                 <a class="side-menu__item" data-toggle="slide" href="#">
                     <i class="side-menu__icon fas fa-users-cog"></i>
@@ -150,13 +162,6 @@
             </li>
             @endrole
 
-            <!-- System Settings -->
-            <li class="slide">
-                <a class="side-menu__item" href="{{ route('settings.index') }}">
-                    <i class="side-menu__icon fas fa-cog"></i>
-                    <span class="side-menu__label">{{ __('messages.system_settings') }}</span>
-                </a>
-            </li>
         </ul>
     </div>
 </aside>

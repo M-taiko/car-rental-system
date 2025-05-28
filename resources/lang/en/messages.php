@@ -838,6 +838,14 @@ return [
     'totals'=> 'Totals',
     'company_information'=> 'Company Information',
     'settings'=> 'Settings',
+    'users'=> 'Users',
+    'roles' => 'Roles',
+    'permissions' => 'Permissions',
+    'user_management' => 'User Management',
+    'users_list' => 'Users List',
+    'roles_list' => 'Roles List',
+    'permissions_list' => 'Permissions List',
+    
     
     
     

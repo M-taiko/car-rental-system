@@ -23,24 +23,24 @@ class ProfileController extends Controller
             ]);
 
             if ($request->hasFile('profile_photo')) {
+                // Get old photo path from database
+                $oldPhoto = Auth::user()->profile_photo_path;
+
                 // Delete old photo if exists
-                if (Auth::user()->profile_photo_path) {
-                    $oldPath = storage_path('app/public/' . Auth::user()->profile_photo_path);
-                    if (file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
+                if ($oldPhoto && Storage::disk('public')->exists('profile-photos/' . $oldPhoto)) {
+                    Storage::disk('public')->delete('profile-photos/' . $oldPhoto);
                 }
 
-                // Upload new photo to public directory
-                $file = $request->file('profile_photo');
-                $filename = time() . '_' . $file->getClientOriginalName();
+                // Store new photo
+                $filename = time() . '_' . $request->file('profile_photo')->getClientOriginalName();
                 $path = 'profile-photos/' . $filename;
                 
                 // Store file using Storage facade
-                $request->file('profile_photo')->storeAs('public', $path);
+                $request->file('profile_photo')->storeAs('public/profile-photos', $filename);
                 
+                // Update user with only the filename
                 Auth::user()->update([
-                    'profile_photo_path' => $path
+                    'profile_photo_path' => $filename
                 ]);
             }
 

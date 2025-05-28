@@ -681,6 +681,14 @@ return [
     'totals'=> 'الإجماليات',
     'company_information'=> 'معلومات الشركة',
     'settings'=> 'الإعدادات',
+    'users' => 'المستخدمين',
+    'roles' => 'الصلاحيات',
+    'permissions' => 'الصلاحيات',
+    'user_management' => 'إدارة المستخدمين',
+    'users_list' => 'قائمة المستخدمين',
+    'roles_list' => 'قائمة الصلاحيات',
+    'permissions_list' => 'قائمة الصلاحيات',
+    
 
 
 ];

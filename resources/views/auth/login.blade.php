@@ -1,5 +1,9 @@
 @extends('layouts.master2')
 
+@php
+use App\Models\Setting; 
+@endphp
+
 @section('css')
 <!-- Sidemenu-respoansive-tabs css -->
 <link href="{{URL::asset('assets/plugins/sidemenu-responsive-tabs/css/sidemenu-responsive-tabs.css')}}" rel="stylesheet">
@@ -25,10 +29,14 @@
                         <div class="col-md-10 col-lg-10 col-xl-9 mx-auto">
                             <div class="card-sigin">
                                 <div class="mb-5 d-flex">
-                                    <a href="{{ url('/' . $page='index') }}">
-                                        <img src="{{URL::asset('assets/img/brand/favicon.png')}}" class="sign-favicon ht-40" alt="logo">
+                                    <a href="{{ url('/') }}">
+                                    @php
+                                        $companyName = App\Models\Setting::get('company_name', 'Car Rental System');
+                                        $logo = App\Models\Setting::get('company_logo', null);
+                                    @endphp
+                                    <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px; margin-top: -20px;" alt="Company Logo" class="logo-1">
                                     </a>
-                                    <h1 class="main-logo1 ml-1 mr-0 my-auto tx-28">bike</h1>
+                                    <h1 class="main-logo1 ml-1 mr-0 my-auto tx-28">{{ $companyName }}</h1>
                                 </div>
                                 <div class="card-sigin">
                                     <div class="main-signup-header">

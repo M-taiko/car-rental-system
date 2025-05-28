@@ -27,16 +27,21 @@ class ProfileController extends Controller
                 $oldPhoto = Auth::user()->profile_photo_path;
 
                 // Delete old photo if exists
-                if ($oldPhoto && Storage::disk('public')->exists('profile-photos/' . $oldPhoto)) {
-                    Storage::disk('public')->delete('profile-photos/' . $oldPhoto);
+                if ($oldPhoto && Storage::disk('public')->exists('settings/' . $oldPhoto)) {
+                    Storage::disk('public')->delete('settings/' . $oldPhoto);
                 }
 
                 // Store new photo
                 $filename = time() . '_' . $request->file('profile_photo')->getClientOriginalName();
-                $path = 'profile-photos/' . $filename;
                 
-                // Store file using Storage facade
-                $request->file('profile_photo')->storeAs('public/profile-photos', $filename);
+                // Create settings directory if it doesn't exist
+                $settingsPath = public_path('settings');
+                if (!file_exists($settingsPath)) {
+                    mkdir($settingsPath, 0777, true);
+                }
+                
+                // Store file directly in public/settings
+                $request->file('profile_photo')->move($settingsPath, $filename);
                 
                 // Update user with only the filename
                 Auth::user()->update([

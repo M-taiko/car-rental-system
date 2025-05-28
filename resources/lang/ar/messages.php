@@ -688,6 +688,9 @@ return [
     'users_list' => 'قائمة المستخدمين',
     'roles_list' => 'قائمة الصلاحيات',
     'permissions_list' => 'قائمة الصلاحيات',
+    'rental_status' => 'حالة الإيجار',
+    'website' => 'الموقع',
+    'rental_information' => 'معلومات الإيجار',
     
 
 

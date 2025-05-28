@@ -234,12 +234,16 @@
 							</div> -->
 							<div class="dropdown main-profile-menu nav nav-item nav-link">
 								<a class="profile-user d-flex" href="{{ route('profile.index') }}">
-									<img alt="{{ Auth::user()->name }}" src="{{ Auth::user()->profile_photo_path ? asset('storage/profile-photos/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+									<!-- <img alt="{{ Auth::user()->name }}" src="{{ Auth::user()->profile_photo_path ? asset('storage/profile-photos/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;"> -->
+									<img alt="{{ Auth::user()->name }}" class=" rounded-circle" src="{{ Auth::user()->profile_photo_path ? asset('settings/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" style="width: 40px; height: 40px; object-fit: cover;">
+
 								</a>
 								<div class="dropdown-menu">
 									<div class="main-header-profile bg-primary p-3">
 										<div class="d-flex wd-100p">
-											<div class="main-img-user"><img alt="" src="{{URL::asset('assets/img/faces/6.jpg')}}" class=""></div>
+											<div class="main-img-user">
+											<img alt="{{ Auth::user()->name }}" class=" rounded-circle" src="{{ Auth::user()->profile_photo_path ? asset('settings/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" style="width: 40px; height: 40px; object-fit: cover;">
+											</div>
 											<div class="mr-3 my-auto">
 												<h6>{{ Auth::user()->name }}</h6><span>{{ Auth::user()->getRoleNames()->first() }}</span>
 											</div>

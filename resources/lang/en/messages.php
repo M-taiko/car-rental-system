@@ -845,6 +845,9 @@ return [
     'users_list' => 'Users List',
     'roles_list' => 'Roles List',
     'permissions_list' => 'Permissions List',
+    'rental_status' => 'Rental Status',
+    'website' => 'Website',
+    'rental_information' => 'Rental Information',   
     
     
     

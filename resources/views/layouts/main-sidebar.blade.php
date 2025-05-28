@@ -10,7 +10,7 @@
                 $logo = Setting::get('company_logo');
             @endphp
 
-            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px; margin-top: -20px;" alt="Company Logo" class="logo-1">
+            <img src="{{ $logo ? asset('settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px; margin-top: -20px;" alt="Company Logo" class="logo-1">
             </a>
         <a class="desktop-logo logo-dark active" href="{{ route('dashboard') }}">
             <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo-white.png') }}" alt="Company Logo" class="logo-1">
@@ -26,7 +26,7 @@
         <div class="app-sidebar__user clearfix">
             <div class="dropdown user-pro-body">
                 <div class="">
-                    <img alt="{{ Auth::user()->name }}" class="avatar avatar-xl brround rounded-circle" src="{{ Auth::user()->profile_photo_path ? asset('storage/profile-photos/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" style="width: 60px; height: 60px; object-fit: cover;">
+                    <img alt="{{ Auth::user()->name }}" class="avatar avatar-xl brround rounded-circle" src="{{ Auth::user()->profile_photo_path ? asset('settings/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" style="width: 60px; height: 60px; object-fit: cover;">
                     <span class="avatar-status profile-status bg-green"></span>
                 </div>
                 <div class="user-info">
@@ -142,7 +142,7 @@
           
             <!-- System Settings -->
             <li class="slide">
-                <a class="side-menu__item" href="{{ route('settings.index') }}">
+                <a class="side-menu__item" href="{{ route('setting.index') }}">
                     <i class="side-menu__icon fas fa-cog"></i>
                     <span class="side-menu__label">{{ __('messages.system_settings') }}</span>
                 </a>

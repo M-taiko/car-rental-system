@@ -1,6 +1,10 @@
 @extends('layouts.master')
 
-
+@php
+    use App\Models\Setting;
+    $settings = Setting::pluck('value', 'key');
+    $logo = $settings['company_logo'];
+@endphp
 
 @section('css')
 <style>
@@ -149,26 +153,23 @@
             <tr>
                 <td style="width: 50%;">
                     @php
-                        use App\Models\Setting; 
+                     
                         $logo = Setting::get('company_logo');
                     @endphp
                     
-                    <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px;"   alt="Company Logo" class="logo-1">
+                    <img src="{{ $logo ? asset('settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px;"   alt="Company Logo" class="logo-1">
 
                     <div class="company-info">
-                        <p>{{ config('settings.company.address') }}</p>
-                        <p>{{ __('messages.phone') }}: {{ config('settings.company.phone') }}</p>
-                        <p>{{ __('messages.email') }}: {{ config('settings.company.email') }}</p>
-                        @if(config('settings.company.website'))
-                        <p>{{ __('messages.website') }}: {{ config('settings.company.website') }}</p>
-                        @endif
-                        <p>{{ __('messages.tax_number') }}: {{ config('settings.company.tax_number') }}</p>
-                        <p>{{ __('messages.commercial_number') }}: {{ config('settings.company.commercial_number') }}</p>
+                        <p>{{ $settings['company_address'] }}</p>
+                        <p>{{ __('messages.phone') }}: {{ $settings['company_phone'] }}</p>
+                        <p>{{ __('messages.email') }}: {{ $settings['company_email'] }}</p>
+                        <p>{{ __('messages.tax_number') }}: {{ $settings['tax_number'] }}</p>
+                        <p>{{ __('messages.commercial_number') }}: {{ $settings['commercial_number'] }}</p>
                     </div>
                 </td>
                 <td style="width: 50%; text-align: left;">
                     <h1 class="title">{{ __('messages.invoice') }}</h1>
-                    <p>{{ __('messages.invoice_number') }}: {{ config('settings.invoice.prefix') }}{{ $rental->id }}</p>
+                    <p>{{ __('messages.invoice_number') }}: {{ $settings['invoice_prefix'] }}{{ $rental->id }}</p>
                     <p>{{ __('messages.date') }}: {{ now()->format('Y-m-d') }}</p>
                     <p>{{ __('messages.rental_status') }}: {{ __('messages.' . $rental->status) }}</p>
                 </td>

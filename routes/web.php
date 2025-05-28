@@ -49,7 +49,11 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Rentals
     Route::resource('rentals', RentalController::class);
-    Route::get('rentals/data', [RentalController::class, 'getRentalsData'])->name('rentals.data');
+
+    // Settings
+    Route::get('setting', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('setting', [SettingController::class, 'update'])->name('settings.update');
+
     Route::post('rentals/store-customer', [RentalController::class, 'storeCustomer'])->name('rentals.storeCustomer');
     Route::post('rentals/store-driver', [RentalController::class, 'storeDriver'])->name('rentals.storeDriver');
     Route::post('rentals/{rental}/return', [RentalController::class, 'returnCar'])->name('rentals.return');
@@ -91,8 +95,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('users', UserController::class);
 
     // Settings
-    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::get('setting', [SettingController::class, 'index'])->name('setting.index');
+    Route::put('setting', [SettingController::class, 'update'])->name('setting.update');
 });
 
 // Language

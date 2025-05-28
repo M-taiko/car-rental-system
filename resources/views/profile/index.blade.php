@@ -21,10 +21,9 @@
                     <div class="col-md-4">
                         <div class="text-center">
                             <div class="profile-photo">
-                                <img src="{{ asset('storage/app/public/' . Auth::user()->profile_photo_path) }}" 
-                                     class="wd-150 ht-150 rounded-circle" 
-                                     id="profileImage" 
-                                     alt="{{ Auth::user()->name }}">
+                               
+                                     <img alt="{{ Auth::user()->name }}" id="profileImage"  class=" rounded-wd-150 ht-150 rounded-circle" src="{{ Auth::user()->profile_photo_path ? asset('settings/' . Auth::user()->profile_photo_path) : asset('assets/img/brand/user.png') }}" style="width: 40px; height: 40px; object-fit: cover;">
+
                             </div>
                             <div class="mt-4">
                                 <h4>{{ Auth::user()->name }}</h4>

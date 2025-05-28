@@ -38,12 +38,12 @@
 
         <ul class="side-menu">
             <!-- Profile Section -->
-            <li class="slide">
+            <!-- <li class="slide">
                 <a class="side-menu__item" href="{{ route('profile.index') }}">
                     <i class="side-menu__icon fas fa-user"></i>
                     <span class="side-menu__label">{{ __('messages.profile') }}</span>
                 </a>
-            </li>
+            </li> -->
 
             <!-- Dashboard Section -->
             <li class="side-item side-item-category">{{ __('messages.main_navigation') }}</li>
@@ -103,9 +103,9 @@
                 </a>
                 <ul class="slide-menu">
                     <li><a class="slide-item" href="{{ route('accounts.index') }}">{{ __('messages.all_transactions') }}</a></li>
-                    <li><a class="slide-item" href="{{ route('accounts.income') }}">{{ __('messages.income') }}</a></li>
-                    <li><a class="slide-item" href="{{ route('accounts.expenses') }}">{{ __('messages.expenses') }}</a></li>
-                    <li><a class="slide-item" href="{{ route('accounts.totals') }}">{{ __('messages.totals') }}</a></li>
+                    <!-- <li><a class="slide-item" href="{{ route('accounts.income') }}">{{ __('messages.income') }}</a></li>
+                    <li><a class="slide-item" href="{{ route('accounts.expenses') }}">{{ __('messages.expenses') }}</a></li> -->
+                    <!-- <li><a class="slide-item" href="{{ route('accounts.totals') }}">{{ __('messages.totals') }}</a></li> -->
                 </ul>
             </li>
 

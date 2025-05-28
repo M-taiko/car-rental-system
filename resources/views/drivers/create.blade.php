@@ -28,12 +28,18 @@
             <div class="card-body">
                 @if ($errors->any())
                 <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
+                    <strong>{{ __('messages.error') }}</strong><br><br>
                     <ul>
                         @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                         @endforeach
                     </ul>
+                </div>
+                @endif
+                @if(session('error'))
+                <div class="alert alert-danger">
+                    <strong>{{ __('messages.error') }}</strong><br><br>
+                    {{ session('error') }}
                 </div>
                 @endif
 
@@ -44,6 +50,22 @@
                             <div class="form-group">
                                 <label class="form-label">{{ __('messages.name') }}</label>
                                 <input type="text" name="name" class="form-control" placeholder="{{ __('messages.enter_driver_name') }}" value="{{ old('name') }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">{{ __('messages.id_number') }}</label>
+                                <input type="text" name="id_number" class="form-control" placeholder="{{ __('messages.enter_id_number') }}" value="{{ old('id_number') }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">{{ __('messages.id_type') }}</label>
+                                <select name="id_type" class="form-control" required>
+                                    <option value="national_id">{{ __('messages.national_id') }}</option>
+                                    <option value="iqama">{{ __('messages.iqama') }}</option>
+                                    <option value="passport">{{ __('messages.passport') }}</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">

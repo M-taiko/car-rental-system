@@ -22,7 +22,7 @@
             <div class="card-header pb-0">
                 <div class="d-flex justify-content-between">
                     <h4 class="card-title mg-b-0">{{ __('messages.edit_driver') }}</h4>
-                    <a href="{{ route('drivers.index') }}" class="btn btn-primary">{{ __('messages.back_to_list') }}</a>
+                    <a href="{{ route('driver.index') }}" class="btn btn-primary">{{ __('messages.back_to_list') }}</a>
                 </div>
             </div>
             <div class="card-body">
@@ -37,7 +37,7 @@
                 </div>
                 @endif
 
-                <form action="{{ route('drivers.update', $driver->id) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('driver.update', $driver->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="row">

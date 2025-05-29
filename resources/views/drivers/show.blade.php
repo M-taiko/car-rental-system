@@ -8,9 +8,9 @@
                 <div class="card-header">
                     <h3 class="card-title">Driver Details</h3>
                     <div class="card-tools">
-                        <a href="{{ route('drivers.index') }}" class="btn btn-default">Back to List</a>
+                        <a href="{{ route('driver.index') }}" class="btn btn-default">Back to List</a>
                         @can('driver-edit')
-                        <a href="{{ route('drivers.edit', $driver->id) }}" class="btn btn-primary">Edit</a>
+                        <a href="{{ route('driver.edit', $driver->id) }}" class="btn btn-primary">Edit</a>
                         @endcan
                     </div>
                 </div>

@@ -39,9 +39,9 @@ Route::group(['middleware' => ['auth']], function () {
     // Cars
     Route::resource('cars', CarController::class);
 
-    // Drivers
-    Route::resource('drivers', DriverController::class);
-    Route::put('drivers/{driver}/status', [DriverController::class, 'updateStatus'])->name('drivers.status');
+    // Driver
+    Route::resource('driver', DriverController::class);
+    Route::put('driver/{driver}/status', [DriverController::class, 'updateStatus'])->name('driver.status');
 
     // Customers
     Route::get('customers/data', [CustomerController::class, 'getCustomersData'])->name('customers.data');

@@ -69,7 +69,7 @@
 
             <!-- Drivers -->
             <li class="slide">
-                <a class="side-menu__item" href="{{ route('drivers.index') }}">
+                <a class="side-menu__item" href="{{ route('driver.index') }}">
                     <i class="side-menu__icon fas fa-id-card"></i>
                     <span class="side-menu__label">{{ __('messages.drivers') }}</span>
                 </a>

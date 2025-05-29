@@ -99,14 +99,17 @@
                         </div>
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="image">Driver Image</label>
-                                <input type="file" name="image" class="form-control" accept="image/*">
+                                <label class="form-label">{{ __('messages.image') }}</label>
+                                <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImage(this)">
                                 @if($driver->image)
                                 <div class="mt-2">
-                                    <img src="{{ asset('storage/' . $driver->image) }}" alt="Current Driver Image" style="max-width: 200px;">
-                                    <p class="text-muted">Current image will be replaced if you upload a new one.</p>
+                                    <img src="{{ asset('storage/settings/' . $driver->image) }}" alt="Current Driver Image" class="img-fluid rounded" style="max-width: 200px;">
+                                    <p class="text-muted">{{ __('messages.current_image_will_be_replaced') }}</p>
                                 </div>
                                 @endif
+                                <div id="imagePreview" class="mt-2" style="display: none;">
+                                    <img id="preview" class="img-fluid rounded" style="max-width: 200px;">
+                                </div>
                             </div>
                         </div>
                         <div class="col-lg-12">

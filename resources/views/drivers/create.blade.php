@@ -106,8 +106,11 @@
                         </div>
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="image">Driver Image</label>
-                                <input type="file" name="image" class="form-control" accept="image/*">
+                                <label class="form-label">{{ __('messages.image') }}</label>
+                                <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImage(this)">
+                                <div id="imagePreview" class="mt-2" style="display: none;">
+                                    <img id="preview" class="img-fluid rounded" style="max-width: 200px;">
+                                </div>
                             </div>
                         </div>
                     </div>

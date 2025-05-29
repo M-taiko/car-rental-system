@@ -19,7 +19,7 @@
     </div>
     <div class="d-flex my-xl-auto right-content">
         @can('driver-create')
-            <a href="{{ route('drivers.create') }}" class="btn btn-primary">
+            <a href="{{ route('driver.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> {{ __('messages.add_driver') }}
             </a>
         @endcan
@@ -78,11 +78,11 @@
                                         <td>
                                             <div class="btn-group" role="group">
                                                 @can('driver-edit')
-                                                <a href="{{ route('drivers.edit', $driver->id) }}" class="btn btn-sm btn-primary">
+                                                <a href="{{ route('driver.edit', $driver->id) }}" class="btn btn-sm btn-primary">
                                                     <i class="fas fa-edit"></i> {{ __('messages.edit') }}</a>
                                                 @endcan
                                                 @can('driver-delete')
-                                                <form action="{{ route('drivers.destroy', $driver->id) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('driver.destroy', $driver->id) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{ __('messages.confirm_delete') }}')">

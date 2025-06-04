@@ -9,10 +9,10 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('rentals', function (Blueprint $table) {
-            $table->string('original_start_time')->nullable()->after('start_time');
+            $table->string('rental_mode')->nullable()->after('driver_price_per_day');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('rentals', function (Blueprint $table) {
-            //
+            $table->dropColumn('rental_mode');
         });
     }
 };

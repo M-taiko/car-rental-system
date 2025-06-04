@@ -22,7 +22,8 @@ class Car extends Model
         'status',
         'description',
         'has_rental_percentage',
-        'rental_percentage'
+        'rental_percentage',
+        'car_type_id'
     ];
 
     protected $casts = [
@@ -48,5 +49,25 @@ class Car extends Model
             return $baseAmount + ($baseAmount * ($this->rental_percentage / 100));
         }
         return $baseAmount;
+    }
+    
+    /**
+     * Get the active rental for the car.
+     */
+    public function activeRental()
+    {
+        return $this->hasOne(Rental::class)
+            ->where(function($query) {
+                $query->where('status', 'active')
+                      ->orWhere('status', 'reserved');
+            });
+    }
+    
+    /**
+     * Get the car type that owns the car.
+     */
+    public function carType()
+    {
+        return $this->belongsTo(CarType::class, 'car_type_id');
     }
 }

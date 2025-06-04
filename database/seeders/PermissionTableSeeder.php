@@ -73,6 +73,13 @@ class PermissionTableSeeder extends Seeder
             // الإعدادات
             'setting-list',
             'setting-edit',
+            
+            // التقارير
+            'report-view-rentals',
+            'report-view-third-party-cars',
+            'report-view-car-types',
+            'report-view-monthly-revenue',
+            'report-export',
         ];
 
         foreach ($permissions as $permission) {

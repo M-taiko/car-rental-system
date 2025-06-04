@@ -91,6 +91,14 @@
                 </a>
             </li>
 
+            <!-- Routes -->
+            <li class="slide">
+                <a class="side-menu__item" href="{{ route('routes.index') }}">
+                    <i class="side-menu__icon fas fa-route"></i>
+                    <span class="side-menu__label">{{ __('messages.routes') }}</span>
+                </a>
+            </li>
+
             <!-- Financial Management -->
             <li class="side-item side-item-category">{{ __('messages.financial_management') }}</li>
 
@@ -111,18 +119,19 @@
 
 
             <!-- Maintenance Section -->
-            <li class="side-item side-item-category">{{ __('messages.maintenance_management') }}</li>
+            <!-- <li class="side-item side-item-category">{{ __('messages.maintenance_management') }}</li>
+               -->
 
             <!-- Maintenance -->
-            <li class="slide">
+            <!-- <li class="slide">
                 <a class="side-menu__item" href="{{ route('maintenance.index') }}">
                     <i class="side-menu__icon fas fa-tools"></i>
                     <span class="side-menu__label">{{ __('messages.maintenance_records') }}</span>
                 </a>
-            </li>
+            </li>  -->
 
             <!-- Spare Parts -->
-            <li class="slide">
+            <!-- <li class="slide">
                 <a class="side-menu__item" data-toggle="slide" href="#">
                     <i class="side-menu__icon fas fa-cogs"></i>
                     <span class="side-menu__label">{{ __('messages.spare_parts') }}</span>
@@ -133,13 +142,29 @@
                     <li><a class="slide-item" href="{{ route('spare-part-sales.index') }}">{{ __('messages.spare_parts_sales') }}</a></li>
                     <li><a class="slide-item" href="{{ route('maintenance.spare_parts_profit_report') }}">{{ __('messages.profit_report') }}</a></li>
                 </ul>
-            </li>
+            </li> -->
 
             <!-- Settings & Administration -->
             <li class="side-item side-item-category">{{ __('messages.system_settings') }}</li>
 
             <!-- Users and Roles -->
           
+            <!-- Reports Section -->
+            <!-- <li class="side-item side-item-category">{{ __('messages.reports') }}</li>
+            <li class="slide">
+                <a class="side-menu__item" data-toggle="slide" href="#">
+                    <i class="side-menu__icon fas fa-chart-bar"></i>
+                    <span class="side-menu__label">{{ __('messages.reports') }}</span>
+                    <i class="angle fe fe-chevron-down"></i>
+                </a>
+                <ul class="slide-menu">
+                    <li><a class="slide-item {{ request()->routeIs('reports.rentals') ? 'active' : '' }}" href="{{ route('reports.rentals') }}">{{ __('messages.rental_reports') }}</a></li>
+                    <li><a class="slide-item {{ request()->routeIs('reports.third-party-cars') ? 'active' : '' }}" href="{{ route('reports.third-party-cars') }}">{{ __('messages.third_party_cars_reports') }}</a></li>
+                    <li><a class="slide-item {{ request()->routeIs('reports.car-types') ? 'active' : '' }}" href="{{ route('reports.car-types') }}">{{ __('messages.car_types_reports') }}</a></li>
+                    <li><a class="slide-item {{ request()->routeIs('reports.monthly-revenue') ? 'active' : '' }}" href="{{ route('reports.monthly-revenue') }}">{{ __('messages.monthly_revenue_reports') }}</a></li>
+                </ul>
+            </li> -->
+
             <!-- System Settings -->
             <li class="slide">
                 <a class="side-menu__item" href="{{ route('setting.index') }}">

@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('settings', function (Blueprint $table) {
-            $table->decimal('tax_percentage', 5, 2)->nullable();
+        Schema::table('accounts', function (Blueprint $table) {
+            $table->unsignedBigInteger('accountable_id')->nullable();
+            $table->string('accountable_type')->nullable();
         });
     }
 
@@ -21,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('settings', function (Blueprint $table) {
-            $table->dropColumn('tax_percentage');
+        Schema::table('accounts', function (Blueprint $table) {
+            //
         });
     }
 };

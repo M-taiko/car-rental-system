@@ -18,6 +18,11 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RouteController;
+use App\Http\Controllers\WorkShiftController;
+use App\Http\Controllers\CarTypeController;
+use App\Http\Controllers\ThirdPartyCarController;
+use App\Http\Controllers\ReportController;
 
 Auth::routes();
 
@@ -31,7 +36,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update.password');
 
-    // Dashboard
+    
     // Dashboard
     Route::get('/index', [HomeController::class, 'index'])->name('index');
     Route::get('/', [HomeController::class, 'dashboard'])->name('dashboard');
@@ -48,7 +53,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('customers', CustomerController::class);
 
     // Rentals
+    Route::get('rentals/data', [RentalController::class, 'getRentalsData'])->name('rentals.getRentalsData');
+    Route::get('rentals/return/form', [RentalController::class, 'showReturnForm'])->name('rentals.showReturnForm');
+    Route::get('rentals/return/details', [RentalController::class, 'calculateReturnDetails'])->name('rentals.calculateReturnDetails');
+
     Route::resource('rentals', RentalController::class);
+    
+    // Routes
+    Route::get('routes/select', [RouteController::class, 'getRoutesForSelect'])->name('routes.select');
 
     // Settings
     Route::get('setting', [SettingController::class, 'index'])->name('settings.index');
@@ -56,6 +68,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::post('rentals/store-customer', [RentalController::class, 'storeCustomer'])->name('rentals.storeCustomer');
     Route::post('rentals/store-driver', [RentalController::class, 'storeDriver'])->name('rentals.storeDriver');
+    Route::post('rentals/store-route', [RentalController::class, 'storeRoute'])->name('rentals.storeRoute');
     Route::post('rentals/{rental}/return', [RentalController::class, 'returnCar'])->name('rentals.return');
     Route::post('rentals/{rental}/calculate-cost', [RentalController::class, 'calculateCost'])->name('rentals.calculateCost');
     Route::get('rentals/{rental}/invoice', [RentalController::class, 'getInvoice'])->name('rentals.invoice');
@@ -93,6 +106,81 @@ Route::group(['middleware' => ['auth']], function () {
     // Users & Roles
     Route::resource('roles', RoleController::class);
     Route::resource('users', UserController::class);
+
+    // Routes Management
+    Route::resource('routes', RouteController::class)->except(['show']);
+    Route::put('routes/{route}/toggle-status', [RouteController::class, 'toggleStatus'])->name('routes.toggle-status');
+    
+    // Work Shifts
+    Route::resource('work-shifts', WorkShiftController::class)->except(['show']);
+    
+    // Car Types
+    Route::resource('car-types', CarTypeController::class)->except(['show']);
+    
+    // Third Party Cars
+    Route::resource('third-party-cars', ThirdPartyCarController::class);
+    Route::post('third-party-cars/{third_party_car}/approve', [ThirdPartyCarController::class, 'approve'])->name('third-party-cars.approve');
+    Route::post('third-party-cars/{third_party_car}/reject', [ThirdPartyCarController::class, 'reject'])->name('third-party-cars.reject');
+    Route::post('third-party-cars/{third_party_car}/complete', [ThirdPartyCarController::class, 'complete'])->name('third-party-cars.complete');
+
+    // Debug route to check user permissions and roles
+    Route::get('/debug/permissions', function() {
+        $user = auth()->user();
+        
+        if (!$user) {
+            return 'No authenticated user';
+        }
+        
+        return [
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'can_view_rentals' => $user->can('report-view-rentals'),
+            'can_export' => $user->can('report-export')
+        ];
+    })->middleware('auth');
+
+    // Reports
+    Route::prefix('reports')->name('reports.')->middleware(['auth'])->group(function () {
+        // Main Reports Dashboard
+        Route::get('/', [ReportController::class, 'index'])
+            ->middleware('check.permission:report-view-rentals')
+            ->name('index');
+        
+        // Rental Reports
+        Route::get('rentals', [ReportController::class, 'rentalReport'])
+            ->middleware('check.permission:report-view-rentals')
+            ->name('rentals');
+            
+        // Rental Reports Data (for DataTables)
+        Route::get('rentals/data', [ReportController::class, 'getRentalData'])
+            ->middleware('check.permission:report-view-rentals')
+            ->name('rentals.data');
+        
+        // Third Party Cars Reports
+        Route::get('third-party-cars', [ReportController::class, 'thirdPartyCars'])
+            ->middleware('check.permission:report-view-third-party-cars')
+            ->name('third-party-cars');
+        
+        // Car Types Reports
+        Route::get('car-types', [ReportController::class, 'carTypes'])
+            ->middleware('check.permission:report-view-car-types')
+            ->name('car-types');
+        
+        // Monthly Revenue Reports
+        Route::get('monthly-revenue', [ReportController::class, 'monthlyRevenue'])
+            ->middleware('check.permission:report-view-monthly-revenue')
+            ->name('monthly-revenue');
+        
+        // Export Reports
+        Route::get('export/{type}/{format}', [ReportController::class, 'export'])
+            ->where('type', 'rentals|third-party-cars|car-types|monthly-revenue')
+            ->where('format', 'excel|pdf')
+            ->middleware('check.permission:report-export')
+            ->name('export');
+    });
 
     // Settings
     Route::get('setting', [SettingController::class, 'index'])->name('setting.index');

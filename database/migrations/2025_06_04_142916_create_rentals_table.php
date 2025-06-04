@@ -19,12 +19,14 @@ return new class extends Migration
             $table->dateTime('start_time');
             $table->dateTime('expected_end_time');
             $table->dateTime('actual_end_time')->nullable();
-            $table->decimal('price_per_day', 10, 2);
+            $table->decimal('price_per_day', 10, 2)->nullable();
             $table->decimal('driver_price_per_day', 10, 2)->nullable();
             $table->decimal('expected_amount', 10, 2);
             $table->decimal('actual_amount', 10, 2)->nullable();
             $table->decimal('paid_amount', 10, 2)->default(0);
             $table->decimal('refunded_amount', 10, 2)->default(0);
+            $table->decimal('total_amount', 10, 2);
+            $table->foreignId('route_id')->nullable()->constrained('routes')->onDelete('set null');
             $table->enum('status', ['active', 'completed', 'cancelled'])->default('active');
             $table->text('notes')->nullable();
             $table->timestamps();

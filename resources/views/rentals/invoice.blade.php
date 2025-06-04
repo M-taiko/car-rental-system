@@ -2,9 +2,8 @@
 
 @php
     use App\Models\Setting;
-    $settings = Setting::pluck('value', 'key');
-    $logo = $settings['company_logo'];
-@endphp
+    $logo = Setting::get('company_logo');
+    @endphp
 
 @section('css')
 <style>
@@ -136,7 +135,7 @@
             <button onclick="window.print()" class="btn btn-primary no-print">
                 <i class="mdi mdi-printer"></i> {{ __('messages.print') }}
             </button>
-            <a href="{{ route('rentals.show', $rental->id) }}" class="btn btn-secondary no-print">
+            <a href="{{ route('rentals.index') }}" class="btn btn-secondary no-print">
                 <i class="mdi mdi-arrow-left"></i> {{ __('messages.back') }}
             </a>
         </div>
@@ -146,7 +145,7 @@
 @endsection
 
 @section('content')
-<div class="invoice-box">
+<div class="invoice-box bg-white">
     <!-- Invoice Header with Company Info -->
     <div class="invoice-header">
         <table>
@@ -160,18 +159,18 @@
                     <img src="{{ $logo ? asset('settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px;"   alt="Company Logo" class="logo-1">
 
                     <div class="company-info">
-                        <p>{{ $settings['company_address'] }}</p>
-                        <p>{{ __('messages.phone') }}: {{ $settings['company_phone'] }}</p>
-                        <p>{{ __('messages.email') }}: {{ $settings['company_email'] }}</p>
-                        <p>{{ __('messages.tax_number') }}: {{ $settings['tax_number'] }}</p>
-                        <p>{{ __('messages.commercial_number') }}: {{ $settings['commercial_number'] }}</p>
+                        <p>{{ Setting::get('company_address') }}</p>
+                        <p>{{ __('messages.phone') }}: {{ Setting::get('company_phone') }}</p>
+                        <p>{{ __('messages.email') }}: {{ Setting::get('company_email') }}</p>
+                        <p>{{ __('messages.tax_number') }}: {{ Setting::get('tax_number') }}</p>
+                        <p>{{ __('messages.commercial_number') }}: {{ Setting::get('commercial_number') }}</p>
                     </div>
                 </td>
                 <td style="width: 50%; text-align: left;">
                     <h1 class="title">{{ __('messages.invoice') }}</h1>
-                    <p>{{ __('messages.invoice_number') }}: {{ $settings['invoice_prefix'] }}{{ $rental->id }}</p>
-                    <p>{{ __('messages.date') }}: {{ now()->format('Y-m-d') }}</p>
-                    <p>{{ __('messages.rental_status') }}: {{ __('messages.' . $rental->status) }}</p>
+                    <p class="fa-1x">{{ __('messages.invoice_number') }}: {{ Setting::get('invoice_prefix') }}{{ $rental->id }}</p>
+                    <p class="fa-1x">{{ __('messages.date') }}: {{ now()->format('Y-m-d') }}</p>
+                    <p class="fa-1x">{{ __('messages.rental_status') }}: {{ __('messages.' . $rental->status) }}</p>
                 </td>
             </tr>
         </table>
@@ -254,7 +253,7 @@
                 </tr>
                 <tr>
                     <td colspan="3" style="text-align: left;">{{ __('messages.remaining_amount') }}:</td>
-                    <td>{{ number_format($rental->calculateRemainingAmount(), 2) }}</td>
+                    <td>{{ number_format($rental->remaining_amount, 2) }}</td>
                 </tr>
             </tfoot>
         </table>

@@ -55,56 +55,47 @@
 
                         <div class="col-lg-6">
                             <div class="form-group">
-                                <label>{{ __('messages.start_time') }}</label>
-                                <p class="form-control-static">{{ $rental->start_time->format('Y-m-d H:i') }}</p>
+                                <label>{{ __('messages.rental_period') }}</label>
+                                <p class="form-control-static">
+                                    {{ $rental->start_time->format('Y-m-d H:i') }} - {{ $rental->end_time->format('Y-m-d H:i') }}
+                                </p>
                             </div>
                         </div>
 
                         <div class="col-lg-6">
                             <div class="form-group">
-                                <label>{{ __('messages.expected_end_time') }}</label>
-                                <p class="form-control-static">{{ $rental->expected_end_time->format('Y-m-d H:i') }}</p>
+                                <label>{{ __('messages.daily_rate') }}</label>
+                                <p class="form-control-static">
+                                    {{ number_format($rental->daily_rate, 2) }} {{ __('messages.sar') }}
+                                </p>
                             </div>
                         </div>
 
                         <div class="col-lg-6">
                             <div class="form-group">
-                                <label for="actual_end_time">{{ __('messages.actual_end_time') }}</label>
-                                <input type="text" class="form-control flatpickr" id="actual_end_time" name="actual_end_time" required>
+                                <label>{{ __('messages.return_date') }}</label>
+                                <input type="text" name="return_date" class="form-control datetimepicker" required>
                             </div>
                         </div>
 
                         <div class="col-lg-6">
                             <div class="form-group">
-                                <label>{{ __('messages.price_per_day') }}</label>
-                                <p class="form-control-static">{{ $rental->price_per_day }}</p>
+                                <label>{{ __('messages.total_days') }}</label>
+                                <input type="text" name="total_days" class="form-control" readonly>
                             </div>
                         </div>
 
                         <div class="col-lg-6">
                             <div class="form-group">
-                                <label>{{ __('messages.driver_price_per_day') }}</label>
-                                <p class="form-control-static">{{ $rental->driver_price_per_day ?? 0 }}</p>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6">
-                            <div class="form-group">
-                                <label>{{ __('messages.expected_amount') }}</label>
-                                <p class="form-control-static">{{ $rental->expected_amount }}</p>
+                                <label>{{ __('messages.total_amount') }}</label>
+                                <input type="text" name="total_amount" class="form-control" readonly>
                             </div>
                         </div>
 
                         <div class="col-lg-6">
                             <div class="form-group">
                                 <label>{{ __('messages.paid_amount') }}</label>
-                                <p class="form-control-static">{{ $rental->paid_amount }}</p>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-6">
-                            <div class="form-group">
-                                <label>{{ __('messages.actual_days') }}</label>
+                                <input type="text" name="paid_amount" class="form-control" value="{{ $rental->paid_amount }}" required>
                                 <p class="form-control-static" id="actual_days">-</p>
                             </div>
                         </div>

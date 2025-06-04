@@ -15,16 +15,21 @@ class Rental extends Model
         'customer_id',
         'driver_id',
         'start_time',
+        'route_id',
         'expected_end_time',
         'actual_end_time',
         'price_per_day',
+        'rental_mode',
+        'total_amount',
         'driver_price_per_day',
         'expected_amount',
         'actual_amount',
         'paid_amount',
         'refunded_amount',
         'status',
-        'notes'
+        'notes',
+        'accountable_id',
+        'accountable_type'
     ];
 
     protected $casts = [
@@ -38,6 +43,12 @@ class Rental extends Model
         'paid_amount' => 'decimal:2',
         'refunded_amount' => 'decimal:2'
     ];
+
+
+    public function accountable()
+    {
+        return $this->morphTo();
+    }
 
     protected $appends = ['total_cost', 'end_time', 'duration'];
 
@@ -54,6 +65,35 @@ class Rental extends Model
     public function driver()
     {
         return $this->belongsTo(Driver::class);
+    }
+    
+    /**
+     * The routes that belong to the rental.
+     */
+    public function route()
+    {
+        return $this->belongsTo(Route::class);
+    }
+    
+    /**
+     * Get the total cost of all routes for this rental.
+     *
+     * @return float
+     */
+    public function getRouteCostAttribute()
+    {
+        return $this->route ? $this->route->price : 0;
+    }
+    
+    /**
+     * Calculate the total cost including routes.
+     *
+     * @return float
+     */
+    public function calculateTotalCost()
+    {
+        $baseAmount = $this->actual_amount ?? $this->expected_amount;
+        return $baseAmount + $this->route_cost;
     }
 
     public function calculateExpectedAmount()
@@ -96,7 +136,8 @@ class Rental extends Model
 
     public function getTotalCostAttribute()
     {
-        return $this->actual_amount ?? $this->expected_amount;
+        $baseAmount = $this->actual_amount ?? $this->expected_amount;
+        return $baseAmount + $this->route_cost;
     }
 
     public function getEndTimeAttribute()
@@ -123,4 +164,16 @@ class Rental extends Model
             'cancelled' => __('messages.cancelled')
         ][$this->status] ?? $this->status;
     }
+
+public function accounts()
+{
+    return $this->morphMany(Account::class, 'accountable');
+}
+
+
+
+
+
+
+
 }

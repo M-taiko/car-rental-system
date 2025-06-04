@@ -33,6 +33,15 @@ class RoleTableSeeder extends Seeder
         }
 
         // Update permissions for existing roles
+        // Get all report permissions
+        $reportPermissions = [
+            'report-view-rentals',
+            'report-view-third-party-cars',
+            'report-view-car-types',
+            'report-view-monthly-revenue',
+            'report-export'
+        ];
+
         $superadmin = Role::where('name', 'superadmin')->first();
         if ($superadmin) {
             $superadmin->syncPermissions(Permission::all());
@@ -40,22 +49,33 @@ class RoleTableSeeder extends Seeder
 
         $admin = Role::where('name', 'admin')->first();
         if ($admin) {
-            $admin->syncPermissions([
+            $adminPermissions = [
                 'driver-list', 'driver-create', 'driver-edit', 'driver-delete',
                 'user-list', 'user-create', 'user-edit',
                 'car-list', 'car-create', 'car-edit',
                 'rental-list', 'rental-create', 'rental-edit', 'rental-return',
                 'customer-list', 'customer-create', 'customer-edit',
                 'account-list', 'account-create', 'account-edit',
-                'maintenance-list', 'maintenance-create', 'maintenance-complete'
-            ]);
+                'maintenance-list', 'maintenance-create', 'maintenance-complete',
+                // Add report permissions
+                'report-view-rentals',
+                'report-view-third-party-cars',
+                'report-view-car-types',
+                'report-view-monthly-revenue',
+                'report-export'
+            ];
+            $admin->syncPermissions($adminPermissions);
         }
 
         $accountant = Role::where('name', 'accountant')->first();
         if ($accountant) {
             $accountant->syncPermissions([
                 'account-list', 'account-create', 'account-edit',
-                'rental-list', 'customer-list'
+                'rental-list', 'customer-list',
+                // Add report permissions
+                'report-view-rentals',
+                'report-view-monthly-revenue',
+                'report-export'
             ]);
         }
 
@@ -65,7 +85,10 @@ class RoleTableSeeder extends Seeder
                 'car-list',
                 'rental-list', 'rental-create',
                 'customer-list', 'customer-create',
-                'account-create'
+                'account-create',
+                // Add report permissions
+                'report-view-rentals',
+                'report-view-car-types'
             ]);
         }
 
@@ -83,7 +106,10 @@ class RoleTableSeeder extends Seeder
                 'rental-list', 'rental-create', 'rental-return',
                 'customer-list', 'customer-create',
                 'car-list',
-                'account-create'
+                'account-create',
+                // Add report permissions
+                'report-view-rentals',
+                'report-view-car-types'
             ]);
         }
     }

@@ -49,18 +49,18 @@ class DriverController extends Controller
 
         Driver::create($data);
 
-        return redirect()->route('drivers.index')
+        return redirect()->route('driver.index')
             ->with('success', 'Driver added successfully.');
     }
 
     public function show(Driver $driver)
     {
-        return view('drivers.show', compact('driver'));
+        return view('driver.show', compact('driver'));
     }
 
     public function edit(Driver $driver)
     {
-        return view('drivers.edit', compact('driver'));
+        return view('driver.edit', compact('driver'));
     }
 
     public function update(Request $request, Driver $driver)
@@ -87,7 +87,7 @@ class DriverController extends Controller
 
         $driver->update($data);
 
-        return redirect()->route('drivers.index')
+        return redirect()->route('driver.index')
             ->with('success', 'Driver updated successfully');
     }
 
@@ -98,7 +98,7 @@ class DriverController extends Controller
         }
         $driver->delete();
 
-        return redirect()->route('drivers.index')
+        return redirect()->route('driver.index')
             ->with('success', 'Driver deleted successfully');
     }
 

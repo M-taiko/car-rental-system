@@ -41,7 +41,7 @@
                                 <th>{{ __('messages.phone') }}</th>
                                 <th>{{ __('messages.email') }}</th>
                                 <th>{{ __('messages.id_number') }}</th>
-                                <th>{{ __('messages.id_type') }}</th>
+                                <!-- <th>{{ __('messages.id_type') }}</th> -->
                                 <th>{{ __('messages.actions') }}</th>
                             </tr>
                         </thead>
@@ -72,7 +72,7 @@
                     {data: 'phone', name: 'phone'},
                     {data: 'email', name: 'email'},
                     {data: 'id_number', name: 'id_number'},
-                    {data: 'id_type_text', name: 'id_type'},
+                    // {data: 'id_type_text', name: 'id_type'},
                     {data: 'action', name: 'action', orderable: false, searchable: false}
                 ],
                 order: [[0, 'desc']]

@@ -1018,6 +1018,16 @@ return [
     'daily_rentals_chart' => 'Daily Rentals Chart',
     'daily_rentals' => 'Daily Rentals',
     'new_customers' => 'New Customers', 
+    'image' => 'Image', 
+    'driver_list' => 'Driver List', 
+    'available_cars' => 'Available Cars', 
+    'net_balance' => 'Net Balance', 
+    'recent_accounts' => 'Recent Accounts', 
+    'view_all' => 'View All', 
+    'monthly_income_vs_expense' => 'Monthly Income vs Expense', 
+    'overview' => 'Overview', 
+    
+
 
     
     

@@ -23,7 +23,7 @@
         <!-- If superadmin, keep the content layout normal -->
         <div class="main-content app-content">
 
-        <!-- If not superadmin, expand content to full width -->
+      
         <div class="main-content app-content" style="margin-left: 0; width: 85%;  display: contents;">
 
 
@@ -32,17 +32,20 @@
     <!-- container -->
     <div class="container-fluid">
         @yield('page-header')
+        <div class="master-content-card card p-3 mt-2">
         @yield('content')
+    </div>
 
         <!-- Only include sidebar and models if the user is superadmin -->
-        @can('superadmin')
+
             @include('layouts.sidebar')
-        @endcan
+
 
         @include('layouts.models')
     </div>
     <!-- /container -->
 
+    @include('layouts.settings')
     @include('layouts.footer')
     @include('layouts.footer-scripts')
 

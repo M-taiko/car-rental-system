@@ -1,0 +1,86 @@
+/* Custom styles for Verona theme */
+
+/* Navbar styles */
+.main-header {
+
+
+}
+
+ .dark-theme .logo-1, .dark-theme .desktop-logo.active{
+    width: 100px;
+    height: 100px;
+    margin-top: 10px;
+    display: block;
+}
+
+/* Sidebar styles */
+.app-sidebar {
+
+
+    box-shadow: none;
+    border-bottom: none;
+}
+
+.side-header{
+    box-shadow: none !important;
+    border-bottom: none !important;
+}
+
+.main-sidebar-header{
+    border-bottom: none !important;
+    border-left:none !important;
+}
+
+.container-fluid, .app-content{
+    background-color: #ffffff !important;
+}
+
+/* Content card styles */
+.master-content-card {
+    z-index: 2;
+    position: relative;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 60px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border: 1px solid #e2e8f5;
+    width: 102%;
+    padding: 0;
+    padding-left: 34px !important;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+/* Customizations for light theme (default) */
+body {
+    background-color: #ecf0fa; /* Default light background */
+    color: #031b4e; /* Default light text color */
+}
+
+/* Customizations for dark theme */
+body.dark-theme {
+    background-color: #141b2d !important; /* Dark background */
+    color: #fff !important; /* Dark text color */
+}
+
+.dark-theme .main-header,
+.dark-theme .app-sidebar,
+.dark-theme .main-sidebar-header,
+.dark-theme .side-header {
+    background-color: #1f2940 !important;
+    border-color: none !important;
+    box-shadow: none !important;
+}
+
+.dark-theme .container-fluid,
+.dark-theme .app-content {
+    background-color: #141b2d !important;
+}
+
+.dark-theme .master-content-card {
+    background: #1f2940 !important;
+    border: 1px solid #1f2940 !important;
+    box-shadow: 0 0 10px rgba(28, 39, 60, 0.1) !important;
+}

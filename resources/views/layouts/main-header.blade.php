@@ -4,7 +4,7 @@
         <div class="main-header-left">
             <div class="responsive-logo">
                 <a href="{{ url('/') }}">
-                    <img src="{{ isset($settings['company_logo']) ? asset('storage/settings/' . $settings['company_logo']) : asset('assets/img/brand/logo.png') }}" alt="Company Logo" class="logo-1">
+                    <img src="{{ isset($settings['company_logo']) ? asset('settings/' . $settings['company_logo']) : asset('assets/img/brand/logo.png') }}" alt="Company Logo" class="logo-1">
                 </a>
             </div>
             <div class="app-sidebar__toggle" data-toggle="sidebar">
@@ -16,6 +16,37 @@
         <div class="main-header-right">
             <!-- Language Switcher -->
             <ul class="nav">
+                <li class="nav-item ">
+                    <a class="new nav-link full-screen-link d-flex pl-0 p-3" href="#" id="darkModeToggle">
+                        <i class="fa fa-moon header-icon-svgs"></i>
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="new nav-link full-screen-link d-flex pl-0 p-3" href="#" id="colorPaletteToggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-palette header-icon-svgs"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right p-3" aria-labelledby="colorPaletteToggle">
+                        <h6>{{ __('Background Colors') }}</h6>
+                        <div class="d-flex flex-wrap mb-3" id="backgroundColors">
+                            <span class="color-box bg-color-box active" data-color="#ffffff" data-target=".side-header, .app-sidebar, .main-sidebar-header, .container-fluid, .main-content"></span>
+                            <span class="color-box bg-color-box" style="background:#000000 !important " data-color="#000000" data-target=".side-header, .app-sidebar, .main-sidebar-header, .container-fluid, .main-content"></span>
+                            <span class="color-box bg-color-box" style="background:#dc3545 !important " data-color="#dc3545" data-target=".side-header, .app-sidebar, .main-sidebar-header, .container-fluid, .main-content"></span>
+                            <span class="color-box bg-color-box" style="background:#fd7e14 !important " data-color="#fd7e14" data-target=".side-header, .app-sidebar, .main-sidebar-header, .container-fluid, .main-content"></span>
+                            <span class="color-box bg-color-box" style="background:#28a745 !important " data-color="#28a745" data-target=".side-header, .app-sidebar, .main-sidebar-header, .container-fluid, .main-content"></span>
+                            <span class="color-box bg-color-box" style="background:#007bff !important " data-color="#007bff" data-target=".side-header, .app-sidebar, .main-sidebar-header, .container-fluid, .main-content"></span>
+                        </div>
+
+                        <h6>{{ __('Text Colors') }}</h6>
+                        <div class="d-flex flex-wrap" id="textColors">
+                            <span class="color-box text-color-box active " style="background:#000000 !important " data-color="#000000" data-target="body"></span>
+                            <span class="color-box text-color-box" style="background:#ffffff !important " data-color="#ffffff" data-target="body"></span>
+                            <span class="color-box text-color-box" style="background:#dc3545 !important " data-color="#dc3545" data-target="body"></span>
+                            <span class="color-box text-color-box" style="background:#fd7e14 !important " data-color="#fd7e14" data-target="body"></span>
+                            <span class="color-box text-color-box" style="background:#28a745 !important " data-color="#28a745" data-target="body"></span>
+                            <span class="color-box text-color-box" style="background:#007bff !important " data-color="#007bff" data-target="body"></span>
+                        </div>
+                    </div>
+                </li>
                 <li class="">
                     <div class="dropdown nav-item">
                         <a href="#" class="d-flex nav-item nav-link pl-0 country-flag1" data-toggle="dropdown" aria-expanded="false">
@@ -30,6 +61,9 @@
                                     } elseif ($locale === 'zh') {
                                         $flag = 'china_flag.jpg';
                                         $langName = __('简体中文');
+                                    } elseif ($locale === 'hi') {
+                                        $flag = 'india_flag.jpg';
+                                        $langName = __('हिन्दी');
                                     }
                                 @endphp
                                 <img src="{{ URL::asset('assets/img/flags/' . $flag) }}" alt="Language Flag">
@@ -63,6 +97,14 @@
                                     <span class="mt-2">简体中文</span>
                                 </div>
                             </a>
+                            <a href="{{ route('language.switch', 'hi') }}" class="dropdown-item d-flex">
+                                <span class="avatar ml-3 align-self-center bg-transparent">
+                                    <img src="{{ URL::asset('assets/img/flags/india_flag.jpg') }}" alt="Hindi" width="20">
+                                </span>
+                                <div class="d-flex">
+                                    <span class="mt-2">हिन्दी</span>
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </li>
@@ -70,7 +112,7 @@
 
             <!-- Search + Fullscreen + Profile -->
             <div class="nav nav-item navbar-nav-right ml-auto">
-				
+
 
                 <!-- Fullscreen Button -->
                 <div class="nav-item full-screen fullscreen-button">
@@ -117,6 +159,9 @@
                         </a>
                         <a href="{{ route('language.switch', 'zh') }}" class="dropdown-item d-flex align-items-center">
                             <img src="{{ URL::asset('assets/img/flags/china_flag.jpg') }}" alt="Chinese" width="20" class="mr-2"> 简体中文
+                        </a>
+                        <a href="{{ route('language.switch', 'hi') }}" class="dropdown-item d-flex align-items-center">
+                            <img src="{{ URL::asset('assets/img/flags/india_flag.jpg') }}" alt="Hindi" width="20" class="mr-2"> हिन्दी
                         </a>
                         <div class="dropdown-divider"></div>
                         <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

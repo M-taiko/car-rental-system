@@ -18,7 +18,7 @@ class LanguageController extends Controller
         \Log::info('Switch requested with locale: ' . $locale);
 
         // Check if locale is valid
-        if (in_array($locale, ['en', 'ar', 'zh'])) {
+        if (in_array($locale, ['en', 'ar', 'zh', 'hi'])) {
             session()->put('locale', $locale);
             \Log::info('Session locale set to: ' . session()->get('locale'));
         } else {

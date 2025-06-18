@@ -13,13 +13,13 @@
             <img src="{{ $logo ? asset('settings/' . $logo) : asset('assets/img/brand/logo.png') }}" style="width: 100px; height: 100px; margin-top: -20px;" alt="Company Logo" class="logo-1">
             </a>
         <a class="desktop-logo logo-dark active" href="{{ route('dashboard') }}">
-            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/logo-white.png') }}" alt="Company Logo" class="logo-1">
+            <img src="{{ $logo ? asset('settings/' . $logo) : asset('assets/img/brand/logo-white.png') }}" alt="Company Logo" class="logo-1">
         </a>
         <a class="logo-icon mobile-logo icon-light active" href="{{ route('dashboard') }}">
-            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/favicon.png') }}" alt="Company Logo" class="logo-1">
+            <img src="{{ $logo ? asset('settings/' . $logo) : asset('assets/img/brand/favicon.png') }}" alt="Company Logo" class="logo-1">
         </a>
         <a class="logo-icon mobile-logo icon-dark active" href="{{ route('dashboard') }}">
-            <img src="{{ $logo ? asset('storage/settings/' . $logo) : asset('assets/img/brand/favicon-white.png') }}" alt="Company Logo" class="logo-1">
+            <img src="{{ $logo ? asset('settings/' . $logo) : asset('assets/img/brand/favicon-white.png') }}" alt="Company Logo" class="logo-1">
         </a>
     </div>
     <div class="main-sidemenu">
@@ -54,7 +54,7 @@
                 </a>
             </li>
 
-         
+
 
             <!-- Car Rental Management -->
             <li class="side-item side-item-category">{{ __('messages.vehicle_management') }}</li>
@@ -148,7 +148,7 @@
             <li class="side-item side-item-category">{{ __('messages.system_settings') }}</li>
 
             <!-- Users and Roles -->
-          
+
             <!-- Reports Section -->
             <!-- <li class="side-item side-item-category">{{ __('messages.reports') }}</li>
             <li class="slide">
@@ -173,7 +173,7 @@
                 </a>
             </li>
             @role('superadmin')
-            
+
             <li class="slide">
                 <a class="side-menu__item" data-toggle="slide" href="#">
                     <i class="side-menu__icon fas fa-users-cog"></i>

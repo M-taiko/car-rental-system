@@ -1,7 +1,7 @@
 <?php
 return [
-    'welcome' => 'Welcome to Bike',
-    'BIKE_RENTAL_SYSTEM' => 'Bike Rental System',
+    'welcome' => 'Welcome to dashBoard',
+    'BIKE_RENTAL_SYSTEM' => 'Car Rental System',
     'dashboard' => 'Dashboard',
     'main' => 'Main',
     'index' => 'Home',
@@ -581,7 +581,7 @@ return [
     'vehicle_management' => 'Vehicle Management',
     'main_navigation' => 'Main Navigation',
     'financial_management' => 'Financial Management',
-    'maintenance_management'=> 'Maintenance Management',  
+    'maintenance_management'=> 'Maintenance Management',
     'all_transactions' => 'All Transactions',
     'spare_parts_management' => 'Spare Parts Management',
     'reports' => 'Reports',
@@ -820,7 +820,7 @@ return [
     'invoice_payment_print_font_arabic_expanded_black' => 'Arabic Expanded Black',
     'invoice_payment_print_font_arabic_expanded_thin' => 'Arabic Expanded Thin',
     'invoice_payment_print_font_arabic_expanded_extra_light' => 'Arabic Expanded Extra Light',
-    
+
     // Quick Add Route
     'quick_add_route_help' => 'Add a new route that can be used for rentals. The route will be available for selection immediately after creation.',
     'distance_km_help' => 'The distance of the route in kilometers',
@@ -842,7 +842,7 @@ return [
     'validation' => [
         'whoops' => 'Whoops! Something went wrong.',
     ],
-    
+
     // Quick Add Translations
     'quick_add' => 'Quick Add',
     'add_route' => 'Add Route',
@@ -921,7 +921,7 @@ return [
     'permissions_list' => 'Permissions List',
     'rental_status' => 'Rental Status',
     'website' => 'Website',
-    'rental_information' => 'Rental Information',   
+    'rental_information' => 'Rental Information',
     'car' => 'Car',
     'daily_rate' => 'Daily Rate',
     'weekly_rate' => 'Weekly Rate',
@@ -1017,21 +1017,21 @@ return [
     'rentals_over_30_days' => 'Rentals Over 30 Days',
     'daily_rentals_chart' => 'Daily Rentals Chart',
     'daily_rentals' => 'Daily Rentals',
-    'new_customers' => 'New Customers', 
-    'image' => 'Image', 
-    'driver_list' => 'Driver List', 
-    'available_cars' => 'Available Cars', 
-    'net_balance' => 'Net Balance', 
-    'recent_accounts' => 'Recent Accounts', 
-    'view_all' => 'View All', 
-    'monthly_income_vs_expense' => 'Monthly Income vs Expense', 
-    'overview' => 'Overview', 
-    
+    'new_customers' => 'New Customers',
+    'image' => 'Image',
+    'driver_list' => 'Driver List',
+    'available_cars' => 'Available Cars',
+    'net_balance' => 'Net Balance',
+    'recent_accounts' => 'Recent Accounts',
+    'view_all' => 'View All',
+    'monthly_income_vs_expense' => 'Monthly Income vs Expense',
+    'overview' => 'Overview',
 
 
-    
-    
-    
-    
-    
+
+
+
+
+
+
 ];
